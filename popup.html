@@ -21,22 +21,51 @@
     select {
       width: 295px;
     }
+    .model-container {
+      display: flex;
+      flex-direction: column;
+      width: 300px;
+    }
+    #modelInput {
+      margin-bottom: 5px;
+    }
+    .model-hint {
+      color: #666;
+      font-size: 12px;
+      margin-top: 2px;
+    }
   </style>
   <body>
     <ul>
       <li><span>API URL:</span><input id="chatUrl" type="text"></li>
       <li><span>API KEY:</span><input id="apiKey" type="text"></li>
       <li><span>MODEL:</span>
-        <select id="model">
-          <option value="gpt-3.5-turbo-0613">gpt-3.5-turbo-0613</option>
-          <option value="gpt-3.5-turbo-1106">gpt-3.5-turbo-1106</option>
-          <option value="gpt-4">gpt-4</option>
-          <option value="gpt-4-0613">gpt-4-0613</option>
-          <option value="gpt-4-turbo">gpt-4-turbo</option>
-          <option value="gpt-4o">gpt-4o</option>
-        </select>
+        <div class="model-container">
+          <input id="modelInput" type="text" placeholder="输入模型名称">
+          <select id="modelSelect" onchange="selectModel(this.value)">
+            <option value="">-- 选择常用模型 --</option>
+            <option value="gpt-3.5-turbo-0613">gpt-3.5-turbo-0613</option>
+            <option value="gpt-3.5-turbo-1106">gpt-3.5-turbo-1106</option>
+            <option value="gpt-4">gpt-4</option>
+            <option value="gpt-4-0613">gpt-4-0613</option>
+            <option value="gpt-4-turbo">gpt-4-turbo</option>
+            <option value="gpt-4o">gpt-4o</option>
+          </select>
+          <div class="model-hint">您可以直接输入模型名称或从列表中选择</div>
+        </div>
       </li>
     </ul>
   </body>
+  <script>
+    function selectModel(value) {
+      if(value) {
+        document.getElementById('modelInput').value = value;
+        // 触发change事件以保存选择
+        document.getElementById('modelInput').dispatchEvent(new Event('change'));
+        // 重置选择框
+        document.getElementById('modelSelect').value = "";
+      }
+    }
+  </script>
   <script src="dist/popup.js"></script>
 </html>

@@ -72,6 +72,22 @@
 - `manifest.json`: 扩展清单文件
 - `assets/`: 图标等资源
 
+### 构建项目
+1. 安装项目依赖：
+   ```
+   npm install
+   ```
+
+2. 构建项目：
+   ```
+   npm run build
+   ```
+
+3. 如果遇到 "`rollup' is not recognized as an internal or external command"` 错误，表明 rollup 工具没有被正确安装或无法在系统路径中找到，请尝试以下解决方法：
+   - 确保已安装所有依赖：`npm install`
+   - 使用 npx 运行 rollup：`npx rollup -c`
+   - 或全局安装 rollup：`npm install -g rollup`
+
 ### 二次开发
 如需进行二次开发，可参考：
 - [Chrome 扩展开发文档](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world?hl=zh-cn)

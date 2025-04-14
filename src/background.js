@@ -97,7 +97,43 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
   }
   
   // 向内容脚本发送消息，显示操作结果
-  chrome.tabs.sendMessage(tab.id, { id: MENU_ID, message })
+  try {
+    // 首先检查标签页是否存在并已加载完成
+    const tabInfo = await chrome.tabs.get(tab.id)
+    if (tabInfo.status === 'complete') {
+      // 使用 try-catch 包装消息发送，处理可能的错误
+      chrome.tabs.sendMessage(tab.id, { id: MENU_ID, message }, (response) => {
+        // 处理可能的错误
+        if (chrome.runtime.lastError) {
+          console.log('消息发送失败:', chrome.runtime.lastError.message)
+          // 如果无法通过内容脚本显示消息，使用通知 API 作为备选方案
+          chrome.notifications.create({
+            type: 'basic',
+            iconUrl: chrome.runtime.getURL('assets/icon.png'),
+            title: '自动收藏',
+            message: message
+          })
+        }
+      })
+    } else {
+      // 如果页面未完全加载，使用通知 API 显示消息
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: chrome.runtime.getURL('assets/icon.png'),
+        title: '自动收藏',
+        message: message
+      })
+    }
+  } catch (error) {
+    console.error('发送消息时出错:', error)
+    // 使用通知 API 作为备选方案
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: chrome.runtime.getURL('assets/icon.png'),
+      title: '自动收藏',
+      message: message
+    })
+  }
 })
 
 /**

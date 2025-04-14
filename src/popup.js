@@ -11,7 +11,7 @@ import { getLocal, setLocal } from './js/utils'
 // 获取DOM元素引用
 const urlInput = document.getElementById('chatUrl')     // API URL输入框
 const keyInput = document.getElementById('apiKey')      // API KEY输入框
-const modelInput = document.getElementById('model')     // 模型选择下拉框
+const modelInput = document.getElementById('modelInput')     // 模型输入框
 
 // 初始化本地配置对象
 let local = {}
