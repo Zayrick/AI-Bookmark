@@ -46,7 +46,10 @@ async function setLocal(local) {
 // 获取DOM元素引用
 const urlInput = document.getElementById('chatUrl');     // API URL输入框
 const keyInput = document.getElementById('apiKey');      // API KEY输入框
-const modelInput = document.getElementById('model');     // 模型选择下拉框
+const modelInput = document.getElementById('modelInput');     // 模型输入框
+const modelSelect = document.getElementById('modelSelect');   // 模型选择下拉框
+const systemNotification = document.getElementById('systemNotification');  // 系统通知单选框
+const browserNotification = document.getElementById('browserNotification');  // 浏览器通知单选框
 
 // 初始化本地配置对象
 let local = {};
@@ -55,6 +58,39 @@ let local = {};
 urlInput.addEventListener('change', (e) => change(e.target.value, 'chatUrl'));
 keyInput.addEventListener('change', (e) => change(e.target.value, 'apiKey'));
 modelInput.addEventListener('change', (e) => change(e.target.value, 'model'));
+
+// 为模型选择下拉框添加事件监听
+modelSelect.addEventListener('change', function() {
+  selectModel(this.value);
+});
+
+// 为通知类型单选框添加事件监听
+systemNotification.addEventListener('change', () => {
+  if (systemNotification.checked) {
+    change('system', 'notificationType');
+  }
+});
+
+browserNotification.addEventListener('change', () => {
+  if (browserNotification.checked) {
+    change('browser', 'notificationType');
+  }
+});
+
+/**
+ * 处理模型选择的函数
+ * 
+ * @param {string} value - 选择的模型值
+ */
+function selectModel(value) {
+  if (value) {
+    modelInput.value = value;
+    // 触发change事件以保存选择
+    modelInput.dispatchEvent(new Event('change'));
+    // 重置选择框
+    modelSelect.value = "";
+  }
+}
 
 // 执行初始化函数
 init();
@@ -71,6 +107,14 @@ async function init() {
   urlInput.value = local.chatUrl || '';
   keyInput.value = local.apiKey || '';
   modelInput.value = local.model || '';
+  
+  // 设置通知类型选择
+  const notificationType = local.notificationType || 'system';
+  if (notificationType === 'system') {
+    systemNotification.checked = true;
+  } else if (notificationType === 'browser') {
+    browserNotification.checked = true;
+  }
 }
 
 /**

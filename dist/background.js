@@ -231,6 +231,8 @@ chrome.runtime.onInstalled.addListener(async () => {
   if (!local.chatUrl) local.chatUrl = 'https://api.openai.com/v1/chat/completions';
   // 设置默认的模型（如果未设置）
   if (!local.model) local.model = 'gpt-3.5-turbo-1106';
+  // 设置默认的通知方式（如果未设置）
+  if (local.notificationType === undefined) local.notificationType = 'system'; // 默认使用系统通知
   // 保存配置到本地存储
   await setLocal(local);
   
@@ -260,10 +262,13 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
   // 检查必要的配置是否已设置
   if (!local.chatUrl) {
     message = '请先设置 chatgpt api 地址！';
+    showNotification(tab, message);
   } else if (!local.apiKey) {
     message = '请先设置 chatgpt api key！';
+    showNotification(tab, message);
   } else if (!local.model) {
     message = '请先设置 chatgpt model！';
+    showNotification(tab, message);
   } else {
     try {
       // 获取当前标签页的标题和URL
@@ -284,44 +289,123 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
       if (!folder) {
         // 如果找不到匹配的文件夹，返回AI推荐的路径
         message = `书签栏中未发现合适的网站目录，ChatGPT 推荐目录路径为: ${path}`;
+        showNotification(tab, message);
       } else {
-        // 找到匹配的文件夹，创建新书签
-        const id = folder.id;
-        await chrome.bookmarks.create({
-          parentId: id,    // 父文件夹ID
-          title,           // 书签标题
-          url              // 书签URL
-        });
-        message = `已收藏至：${path}`;  // 操作成功消息
+        // 找到匹配的文件夹，显示确认对话框让用户编辑标题
+        const confirmed = await showConfirmDialog(tab, title, url, path);
+        if (confirmed.confirmed) {
+          // 用户确认添加，使用可能编辑过的标题
+          const id = folder.id;
+          await chrome.bookmarks.create({
+            parentId: id,
+            title: confirmed.title,
+            url
+          });
+          message = `已收藏至：${path}`;
+          showNotification(tab, message);
+        }
       }
     } catch (err) {
       // 处理错误情况
       console.error(err);
       message = `收藏失败！\n${err.valueOf()}`;
+      showNotification(tab, message);
     }
   }
-  
-  // 向内容脚本发送消息，显示操作结果
-  try {
-    // 首先检查标签页是否存在并已加载完成
-    const tabInfo = await chrome.tabs.get(tab.id);
-    if (tabInfo.status === 'complete') {
-      // 使用 try-catch 包装消息发送，处理可能的错误
-      chrome.tabs.sendMessage(tab.id, { id: MENU_ID, message }, (response) => {
-        // 处理可能的错误
+});
+
+/**
+ * 显示确认对话框，允许用户确认并编辑标题
+ * 
+ * @param {Object} tab - 当前标签页信息 
+ * @param {string} title - 页面标题
+ * @param {string} url - 页面URL
+ * @param {string} path - 收藏夹位置路径
+ * @returns {Promise<Object>} 用户确认结果和编辑后的标题
+ */
+function showConfirmDialog(tab, title, url, path) {
+  return new Promise((resolve) => {
+    chrome.tabs.sendMessage(
+      tab.id,
+      { 
+        id: MENU_ID, 
+        action: 'confirmBookmark',
+        title: title,
+        url: url,
+        path: path
+      },
+      (response) => {
         if (chrome.runtime.lastError) {
           console.log('消息发送失败:', chrome.runtime.lastError.message);
-          // 如果无法通过内容脚本显示消息，使用通知 API 作为备选方案
-          chrome.notifications.create({
-            type: 'basic',
-            iconUrl: chrome.runtime.getURL('assets/icon.png'),
-            title: '自动收藏',
-            message: message
-          });
+          // 如果无法发送消息，默认为确认添加
+          resolve({ confirmed: true, title: title });
+        } else {
+          resolve(response || { confirmed: false });
         }
+      }
+    );
+  });
+}
+
+/**
+ * 显示通知消息
+ * 
+ * @param {Object} tab - 当前标签页信息
+ * @param {string} message - 要显示的消息
+ */
+async function showNotification(tab, message) {
+  // 获取用户的通知设置
+  const local = await getLocal();
+  const notificationType = local.notificationType || 'system'; // 默认使用系统通知
+  
+  if (notificationType === 'system') {
+    // 使用系统通知
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: chrome.runtime.getURL('assets/icon.png'),
+      title: '自动收藏',
+      message: message
+    });
+  } else if (notificationType === 'browser') {
+    // 使用浏览器内通知
+    let messageSent = false; // 标记是否成功发送浏览器通知
+    
+    try {
+      // 创建一个Promise来处理标签页检查
+      await new Promise((resolve) => {
+        chrome.tabs.get(tab.id, (tabInfo) => {
+          if (chrome.runtime.lastError || !tabInfo || tabInfo.status !== 'complete') {
+            // 如果标签页不可用，回退到系统通知
+            messageSent = false;
+            resolve();
+          } else {
+            // 尝试使用内容脚本显示浏览器内通知
+            chrome.tabs.sendMessage(tab.id, { id: MENU_ID, message }, (response) => {
+              if (chrome.runtime.lastError) {
+                // 如果消息发送失败，设置标记为false
+                messageSent = false;
+              } else {
+                // 消息发送成功
+                messageSent = true;
+              }
+              resolve();
+            });
+          }
+        });
       });
-    } else {
-      // 如果页面未完全加载，使用通知 API 显示消息
+      
+      // 如果浏览器通知发送失败，才使用系统通知作为备选
+      if (!messageSent) {
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: chrome.runtime.getURL('assets/icon.png'),
+          title: '自动收藏',
+          message: message
+        });
+      }
+    } catch (error) {
+      console.error('发送消息时出错:', error);
+      // 出错时回退到系统通知
       chrome.notifications.create({
         type: 'basic',
         iconUrl: chrome.runtime.getURL('assets/icon.png'),
@@ -329,17 +413,8 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
         message: message
       });
     }
-  } catch (error) {
-    console.error('发送消息时出错:', error);
-    // 使用通知 API 作为备选方案
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: chrome.runtime.getURL('assets/icon.png'),
-      title: '自动收藏',
-      message: message
-    });
   }
-});
+}
 
 /**
  * 递归提取书签树中所有文件夹的路径信息
