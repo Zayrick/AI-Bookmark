@@ -163,44 +163,41 @@ async function showNotification(tab, message) {
     });
   } else if (notificationType === 'browser') {
     // 使用浏览器内通知
-    let messageSent = false; // 标记是否成功发送浏览器通知
-    
     try {
-      // 创建一个Promise来处理标签页检查
-      await new Promise((resolve) => {
-        chrome.tabs.get(tab.id, (tabInfo) => {
-          if (chrome.runtime.lastError || !tabInfo || tabInfo.status !== 'complete') {
-            // 如果标签页不可用，回退到系统通知
-            messageSent = false;
-            resolve();
+      // 检查标签页是否可用
+      const tabInfo = await new Promise(resolve => {
+        chrome.tabs.get(tab.id, (info) => {
+          if (chrome.runtime.lastError) {
+            resolve(null);
           } else {
-            // 尝试使用内容脚本显示浏览器内通知
-            chrome.tabs.sendMessage(tab.id, { id: MENU_ID, message }, (response) => {
-              if (chrome.runtime.lastError) {
-                // 如果消息发送失败，设置标记为false
-                messageSent = false;
-              } else {
-                // 消息发送成功
-                messageSent = true;
-              }
-              resolve();
-            });
+            resolve(info);
           }
         });
       });
       
-      // 如果浏览器通知发送失败，才使用系统通知作为备选
-      if (!messageSent) {
+      if (!tabInfo || tabInfo.status !== 'complete') {
+        // 标签页不可用，使用系统通知
         chrome.notifications.create({
           type: 'basic',
           iconUrl: chrome.runtime.getURL('assets/icon.png'),
           title: '自动收藏',
           message: message
         });
+        return;
       }
+      
+      // 尝试发送浏览器内通知消息
+      await new Promise(resolve => {
+        chrome.tabs.sendMessage(tab.id, { id: MENU_ID, message }, response => {
+          resolve(response);
+        });
+      });
+      
+      // 注意：此处不需要额外的系统通知作为备选，这可能是导致双重通知的原因
+      
     } catch (error) {
       console.error('发送消息时出错:', error);
-      // 出错时回退到系统通知
+      // 仅当发生错误时才回退到系统通知
       chrome.notifications.create({
         type: 'basic',
         iconUrl: chrome.runtime.getURL('assets/icon.png'),
