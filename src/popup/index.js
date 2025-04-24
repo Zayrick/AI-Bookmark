@@ -7,7 +7,7 @@
 import { getConfig, saveConfig } from '../utils/storage.js'
 import { NOTIFICATION_TYPES } from '../utils/constants.js'
 import { getAllFolders, createBookmark } from '../utils/bookmarks.js'
-import { classifyWebsite, fetchModelsList } from '../services/aiService.js'
+import { classifyWebsite, fetchModelsList, generateBookmarkTitle } from '../services/aiService.js'
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', init)
@@ -26,6 +26,7 @@ async function init() {
   const modelList = document.getElementById('modelList')    // 模型列表容器
   const systemNotification = document.getElementById('systemNotification')  // 系统通知单选框
   const browserNotification = document.getElementById('browserNotification')  // 浏览器通知单选框
+  const enableTitleGen = document.getElementById('enableTitleGen')  // 启用标题生成开关
   const bookmarkButton = document.getElementById('bookmarkButton')  // 收藏按钮
   
   // 从本地存储获取配置
@@ -43,6 +44,9 @@ async function init() {
   } else if (notificationType === NOTIFICATION_TYPES.BROWSER) {
     browserNotification.checked = true
   }
+
+  // 设置标题生成开关状态
+  enableTitleGen.checked = config.enableTitleGen !== false  // 默认为true
   
   // 为各输入元素添加变更事件监听器
   urlInput.addEventListener('change', (e) => updateConfig('chatUrl', e.target.value))
@@ -72,6 +76,11 @@ async function init() {
     if (browserNotification.checked) {
       updateConfig('notificationType', NOTIFICATION_TYPES.BROWSER)
     }
+  })
+
+  // 为标题生成开关添加事件监听
+  enableTitleGen.addEventListener('change', () => {
+    updateConfig('enableTitleGen', enableTitleGen.checked)
   })
   
   // 为收藏按钮添加点击事件
@@ -179,7 +188,8 @@ async function handleBookmark() {
     console.log('获取到配置:', { 
       chatUrl: config.chatUrl ? '已设置' : '未设置', 
       apiKey: config.apiKey ? '已设置' : '未设置',
-      model: config.model
+      model: config.model,
+      enableTitleGen: config.enableTitleGen !== false
     });
     
     // 验证必要配置
@@ -244,15 +254,35 @@ async function handleBookmark() {
       
       console.log('获取到的文件夹:', folders.length, '个');
       
-      // 调用AI接口获取最合适的文件夹路径
-      console.log('准备调用AI服务...');
-      const path = await classifyWebsite(config, folders.map(i => i.path), title)
+      // 根据是否启用标题生成来决定API调用方式
+      let path, aiGeneratedTitle;
+      
+      if (config.enableTitleGen !== false) {
+        // 并行执行AI服务调用
+        console.log('准备并行调用AI服务...');
+        [path, aiGeneratedTitle] = await Promise.all([
+          // 获取推荐路径
+          classifyWebsite(config, folders.map(i => i.path), title),
+          // 生成书签标题
+          generateBookmarkTitle(config, title)
+        ]);
+      } else {
+        // 只调用路径分类
+        console.log('准备调用AI服务(仅路径分类)...');
+        path = await classifyWebsite(config, folders.map(i => i.path), title);
+        aiGeneratedTitle = title; // 使用原始标题
+      }
+      
       if (!path) {
         showPopupMessage('AI无法确定合适的文件夹路径', 'error')
         return
       }
       
-      console.log('AI推荐路径:', path)
+      console.log('AI处理结果:', {
+        推荐路径: path,
+        生成标题: aiGeneratedTitle,
+        是否启用标题生成: config.enableTitleGen !== false
+      });
       
       // 查找匹配的文件夹对象
       const folder = folders.find(i => i.path === path)
@@ -262,7 +292,7 @@ async function handleBookmark() {
         showPopupMessage(`书签栏中未发现合适的网站目录，AI 推荐目录路径为: ${path}`, 'warning')
       } else {
         // 在popup中显示确认对话
-        showBookmarkConfirmDialog(title, url, path, folder.id)
+        showBookmarkConfirmDialog(title, url, path, folder.id, aiGeneratedTitle)
       }
     } catch (innerErr) {
       console.error('获取标签页信息时出错:', innerErr);
@@ -281,13 +311,15 @@ async function handleBookmark() {
  * @param {string} url - 页面URL
  * @param {string} path - 文件夹路径
  * @param {string} folderId - 文件夹ID
+ * @param {string} aiGeneratedTitle - AI生成的标题建议
  */
-function showBookmarkConfirmDialog(title, url, path, folderId) {
+function showBookmarkConfirmDialog(title, url, path, folderId, aiGeneratedTitle) {
   try {
     // 确保所有参数都有值
     title = title || '无标题';
     url = url || '';
     path = path || '未知路径';
+    aiGeneratedTitle = aiGeneratedTitle || title;
     
     if (!folderId) {
       showPopupMessage('无效的文件夹ID', 'error');
@@ -307,7 +339,10 @@ function showBookmarkConfirmDialog(title, url, path, folderId) {
     dialogDiv.innerHTML = `
       <div class="form-group">
         <label class="form-label">收藏标题</label>
-        <input id="bookmarkTitle" type="text" class="form-control" value="${escapeHTML(title)}">
+        <input id="bookmarkTitle" type="text" class="form-control" value="${escapeHTML(aiGeneratedTitle)}">
+        <p class="form-hint" style="margin-top: 5px; font-size: 12px; color: #666;">
+          原始标题: ${escapeHTML(title)}
+        </p>
       </div>
       <div class="form-group">
         <p class="form-hint">URL: ${escapeHTML(url)}</p>

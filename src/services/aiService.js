@@ -187,4 +187,64 @@ async function parseResponse(response) {
     // 向上层传递错误
     throw err
   }
+}
+
+/**
+ * 使用AI生成书签标题
+ * 
+ * @param {Object} config - 配置对象，包含API URL、KEY和模型
+ * @param {string} title - 网页标题
+ * @param {string} pageContent - 网页内容
+ * @returns {Promise<string>} 返回生成的书签标题
+ * @throws {Error} 如果API调用失败或解析失败
+ */
+export async function generateBookmarkTitle(config, title, pageContent = '') {
+  try {
+    const { apiKey, model, chatUrl } = config;
+    
+    // 构建请求消息
+    const messages = [
+      {
+        role: 'system',
+        content: '你是一个专业的书签标题生成助手。请根据网页标题和内容生成一个简洁的书签标题。标题格式为"品牌 - 网页内容的作用"。例如："淘宝 - 购物"，"CSDN - Office安装教学"。品牌名应该保持原样，不要翻译。'
+      },
+      {
+        role: 'user',
+        content: `请根据以下信息生成书签标题：\n标题：${title}\n${pageContent ? '内容：' + pageContent : ''}`
+      }
+    ];
+
+    // 构建请求体
+    const body = {
+      model,
+      temperature: 0.3, // 使用较低的温度以获得更稳定的输出
+      messages,
+      max_tokens: 100
+    };
+
+    // 发送请求
+    const response = await fetch(chatUrl, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+
+    // 解析响应
+    const json = await response.json();
+    
+    if (json.error) {
+      throw new Error(`生成标题失败：${json.error.message}`);
+    }
+
+    // 提取生成的标题
+    const generatedTitle = json.choices[0].message.content.trim();
+    return generatedTitle;
+  } catch (err) {
+    console.error('生成书签标题失败:', err);
+    // 如果生成失败，返回原始标题
+    return title;
+  }
 } 
