@@ -39,6 +39,56 @@ export async function classifyWebsite(config, folderPaths, title, pageContent = 
 }
 
 /**
+ * 获取API端点支持的模型列表
+ * 
+ * @param {string} apiUrl - API URL地址
+ * @param {string} apiKey - API密钥
+ * @returns {Promise<Array<Object>>} 返回模型列表
+ * @throws {Error} 如果API调用失败或解析失败
+ */
+export async function fetchModelsList(apiUrl, apiKey) {
+  try {
+    // 检查API URL是否以/chat/completions结尾
+    if (!apiUrl.endsWith('/chat/completions')) {
+      return []; // 如果不是以/chat/completions结尾，直接返回空数组
+    }
+    
+    // 尝试替换为/models端点
+    const modelsUrl = apiUrl.replace(/\/chat\/completions$/, '/models');
+    
+    // 构建请求配置
+    const requestConfig = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      method: 'GET'
+    };
+    
+    // 发送请求
+    const response = await fetch(modelsUrl, requestConfig);
+    
+    // 如果响应不成功，返回空数组
+    if (!response.ok) {
+      return [];
+    }
+    
+    // 解析响应
+    const data = await response.json();
+    
+    // 如果返回了有效的数据数组，则返回该数组
+    if (data && Array.isArray(data.data)) {
+      return data.data;
+    }
+    
+    return [];
+  } catch (err) {
+    console.error('获取模型列表失败:', err);
+    return []; // 遇到错误时返回空数组
+  }
+}
+
+/**
  * 生成AI API请求的负载数据
  * 
  * @param {Object} config - 配置对象

@@ -7,7 +7,7 @@
 import { getConfig, saveConfig } from '../utils/storage.js'
 import { NOTIFICATION_TYPES } from '../utils/constants.js'
 import { getAllFolders, createBookmark } from '../utils/bookmarks.js'
-import { classifyWebsite } from '../services/aiService.js'
+import { classifyWebsite, fetchModelsList } from '../services/aiService.js'
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', init)
@@ -21,7 +21,9 @@ async function init() {
   const urlInput = document.getElementById('chatUrl')     // API URL输入框
   const keyInput = document.getElementById('apiKey')      // API KEY输入框
   const modelInput = document.getElementById('modelInput')     // 模型输入框
-  const modelSelect = document.getElementById('modelSelect')   // 模型选择下拉框
+  const modelSearch = document.getElementById('modelSearch')   // 模型搜索框
+  const searchModelBtn = document.getElementById('searchModelBtn')  // 模型搜索按钮
+  const modelList = document.getElementById('modelList')    // 模型列表容器
   const systemNotification = document.getElementById('systemNotification')  // 系统通知单选框
   const browserNotification = document.getElementById('browserNotification')  // 浏览器通知单选框
   const bookmarkButton = document.getElementById('bookmarkButton')  // 收藏按钮
@@ -47,16 +49,17 @@ async function init() {
   keyInput.addEventListener('change', (e) => updateConfig('apiKey', e.target.value))
   modelInput.addEventListener('change', (e) => updateConfig('model', e.target.value))
   
-  // 为模型选择下拉框添加事件监听
-  modelSelect.addEventListener('change', function() {
-    if (this.value) {
-      modelInput.value = this.value
-      // 触发change事件以保存选择
-      modelInput.dispatchEvent(new Event('change'))
-      // 重置选择框
-      this.value = ""
+  // 为模型搜索添加事件监听
+  searchModelBtn.addEventListener('click', async () => {
+    await searchModels(urlInput.value, keyInput.value, modelSearch.value);
+  });
+  
+  // 为模型搜索框添加回车事件
+  modelSearch.addEventListener('keypress', async (e) => {
+    if (e.key === 'Enter') {
+      await searchModels(urlInput.value, keyInput.value, modelSearch.value);
     }
-  })
+  });
   
   // 为通知类型单选框添加事件监听
   systemNotification.addEventListener('change', () => {
@@ -73,6 +76,96 @@ async function init() {
   
   // 为收藏按钮添加点击事件
   bookmarkButton.addEventListener('click', handleBookmark)
+}
+
+/**
+ * 搜索并显示可用模型列表
+ * 
+ * @param {string} apiUrl - API URL地址
+ * @param {string} apiKey - API密钥
+ * @param {string} searchTerm - 搜索关键词
+ */
+async function searchModels(apiUrl, apiKey, searchTerm = '') {
+  const modelList = document.getElementById('modelList');
+  const modelInput = document.getElementById('modelInput');
+  
+  // 检查API URL和KEY是否已设置
+  if (!apiUrl) {
+    showPopupMessage('请先设置API地址！', 'error');
+    return;
+  }
+  
+  if (!apiKey) {
+    showPopupMessage('请先设置API密钥！', 'error');
+    return;
+  }
+  
+  // 显示模型列表
+  modelList.style.display = 'block';
+  
+  // 显示加载中
+  modelList.innerHTML = '<div class="model-loading">正在加载模型列表...</div>';
+  
+  try {
+    // 获取模型列表
+    const models = await fetchModelsList(apiUrl, apiKey);
+    
+    // 如果没有返回模型或返回空数组
+    if (!models || models.length === 0) {
+      modelList.innerHTML = '<div class="model-loading">未找到可用模型，请确认API地址格式正确</div>';
+      return;
+    }
+    
+    // 根据搜索词过滤模型
+    let filteredModels = models;
+    if (searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      filteredModels = models.filter(model => 
+        (model.id && model.id.toLowerCase().includes(lowerSearchTerm)) || 
+        (model.name && model.name.toLowerCase().includes(lowerSearchTerm))
+      );
+    }
+    
+    // 如果过滤后没有模型
+    if (filteredModels.length === 0) {
+      modelList.innerHTML = `<div class="model-loading">未找到匹配 "${searchTerm}" 的模型</div>`;
+      return;
+    }
+    
+    // 生成模型列表HTML
+    let html = '';
+    filteredModels.forEach(model => {
+      const modelId = model.id;
+      const modelName = model.name || modelId;
+      html += `
+        <div class="model-item" data-model-id="${escapeHTML(modelId)}">
+          <div class="model-name">${escapeHTML(modelName)}</div>
+          <div class="model-id">${escapeHTML(modelId)}</div>
+        </div>
+      `;
+    });
+    
+    modelList.innerHTML = html;
+    
+    // 为每个模型项添加点击事件
+    document.querySelectorAll('.model-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const modelId = item.getAttribute('data-model-id');
+        // 设置选中的模型到输入框
+        modelInput.value = modelId;
+        // 触发change事件保存选择
+        modelInput.dispatchEvent(new Event('change'));
+        // 隐藏模型列表
+        modelList.style.display = 'none';
+        // 清空搜索框
+        document.getElementById('modelSearch').value = '';
+      });
+    });
+    
+  } catch (err) {
+    console.error('获取模型列表失败:', err);
+    modelList.innerHTML = `<div class="model-loading">获取模型列表失败: ${err.message || err.valueOf()}</div>`;
+  }
 }
 
 /**
