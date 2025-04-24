@@ -1,0 +1,14 @@
+{
+  "name": "ai-bookmark",
+  "version": "1.0.0",
+  "description": "利用AI实现自动收藏网站到最佳书签栏",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w"
+  },
+  "devDependencies": {
+    "rollup": "^3.25.1",
+    "chrome-types": "^0.1.231"
+  }
+}

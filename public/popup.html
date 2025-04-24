@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>自动收藏设置</title>
+    <style>
+      body {
+        width: 350px;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 16px;
+        color: #333;
+      }
+      h2 {
+        margin-top: 0;
+        color: #4285f4;
+        font-size: 18px;
+        margin-bottom: 16px;
+      }
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .form-control {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      .form-hint {
+        color: #666;
+        font-size: 12px;
+        margin-top: 4px;
+      }
+      select.form-control {
+        height: 34px;
+      }
+      .radio-group {
+        display: flex;
+        gap: 15px;
+      }
+      .radio-option {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+      }
+      .radio-option input {
+        margin-right: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>AI 书签助手设置</h2>
+    
+    <div class="form-group">
+      <label class="form-label">API 地址</label>
+      <input id="chatUrl" type="text" class="form-control" placeholder="例如: https://api.openai.com/v1/chat/completions">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">API 密钥</label>
+      <input id="apiKey" type="password" class="form-control" placeholder="输入您的API密钥">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">AI 模型</label>
+      <input id="modelInput" type="text" class="form-control" placeholder="输入模型名称">
+      <div class="form-hint">自定义模型名称或从下方选择</div>
+      <select id="modelSelect" class="form-control" style="margin-top: 8px;">
+        <option value="">-- 选择常用模型 --</option>
+        <option value="gpt-3.5-turbo-0613">gpt-3.5-turbo-0613</option>
+        <option value="gpt-3.5-turbo-1106">gpt-3.5-turbo-1106</option>
+        <option value="gpt-4">gpt-4</option>
+        <option value="gpt-4-0613">gpt-4-0613</option>
+        <option value="gpt-4-turbo">gpt-4-turbo</option>
+        <option value="gpt-4o">gpt-4o</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">通知方式</label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="notificationType" value="system" id="systemNotification">
+          系统通知
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="notificationType" value="browser" id="browserNotification">
+          浏览器内通知
+        </label>
+      </div>
+    </div>
+    
+    <script src="../dist/popup.js" type="module"></script>
+  </body>
+</html> 

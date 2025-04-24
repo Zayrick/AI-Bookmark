@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "AI 书签助手",
+  "description": "利用 AI 实现自动收藏网站到最佳书签栏",
+  "version": "1.0.0",
+  "icons": {
+    "16": "public/assets/icon.png",
+    "32": "public/assets/icon.png",
+    "64": "public/assets/icon.png",
+    "128": "public/assets/icon.png"
+  },
+  "action": {
+    "default_popup": "public/popup.html",
+    "default_icon": "public/assets/icon.png"
+  },
+  "permissions": [
+    "storage",
+    "contextMenus",
+    "bookmarks",
+    "notifications"
+  ],
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "dist/content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
