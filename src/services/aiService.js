@@ -20,13 +20,14 @@ import {
  * @param {Object} config - 配置对象，包含API URL、KEY和模型
  * @param {Array<string>} folderPaths - 可用书签文件夹路径数组
  * @param {string} title - 网页标题
+ * @param {string} pageContent - 网页内容
  * @returns {Promise<string>} 返回最合适的文件夹路径
  * @throws {Error} 如果API调用失败或解析失败
  */
-export async function classifyWebsite(config, folderPaths, title) {
+export async function classifyWebsite(config, folderPaths, title, pageContent = '') {
   try {
     // 生成请求负载
-    const payload = generatePayload(config, folderPaths, title)
+    const payload = generatePayload(config, folderPaths, title, pageContent)
     // 发送API请求
     const response = await fetch(config.chatUrl, payload)
     // 解析响应并返回结果
@@ -43,9 +44,10 @@ export async function classifyWebsite(config, folderPaths, title) {
  * @param {Object} config - 配置对象
  * @param {Array<string>} folderPaths - 书签文件夹路径数组
  * @param {string} title - 网页标题
+ * @param {string} pageContent - 网页内容文本
  * @returns {Object} 包含请求头和体的完整请求配置
  */
-function generatePayload(config, folderPaths, title) {
+function generatePayload(config, folderPaths, title, pageContent = '') {
   const { apiKey, model } = config
   
   // 构建对话消息数组
@@ -56,7 +58,7 @@ function generatePayload(config, folderPaths, title) {
     },
     {
       role: 'user',
-      content: `${USER_PROMPT} ${title}`  // 用户提问：提供网站标题
+      content: `${USER_PROMPT} ${title}\n\n${pageContent ? '网页内容：' + pageContent : ''}`  // 用户提问：提供网站标题和内容
     }
   ]
   

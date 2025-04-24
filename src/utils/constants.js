@@ -23,10 +23,10 @@ export const TEMPERATURE = 0.2
 
 // 函数调用配置
 export const FUNCTION_NAME = 'classify_the_website'
-export const FUNCTION_DESCRIPTION = 'Automatically match the best folder path based on the website title'
+export const FUNCTION_DESCRIPTION = 'Automatically match the best folder path based on the website title and content'
 export const PARAM_NAME = 'folder_path'
 export const PARAM_DESCRIPTION = 'Folder path separated by /'
 
 // 提示词
-export const SYSTEM_PROMPT = 'Please classify the website into the most appropriate folder path based on the title of the website and the meaning of the folder name.'
+export const SYSTEM_PROMPT = 'Please classify the website into the most appropriate folder path based on the title of the website, the website content, and the meaning of the folder name. The website content is more important than the title when determining the classification.'
 export const USER_PROMPT = 'The website title is:' 

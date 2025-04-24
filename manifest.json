@@ -17,7 +17,8 @@
     "storage",
     "contextMenus",
     "bookmarks",
-    "notifications"
+    "notifications",
+    "tabs"
   ],
   "background": {
     "service_worker": "dist/background.js",

@@ -34,6 +34,28 @@ chrome.runtime.onInstalled.addListener(async () => {
 })
 
 /**
+ * 获取当前标签页的页面内容
+ * 
+ * @param {number} tabId - 标签页ID
+ * @returns {Promise<string>} 页面内容
+ */
+async function getPageContent(tabId) {
+  try {
+    // 发送消息到内容脚本，请求提取页面内容
+    const response = await chrome.tabs.sendMessage(tabId, {
+      id: MENU_ID,
+      action: 'getPageContent'
+    });
+    
+    // 返回页面内容，如果没有获取到则返回空字符串
+    return response && response.content ? response.content : '';
+  } catch (error) {
+    console.error('获取页面内容时出错:', error);
+    return ''; // 出错时返回空字符串
+  }
+}
+
+/**
  * 响应右键菜单点击事件的监听器
  * 处理自动收藏功能的核心逻辑
  */
@@ -60,11 +82,14 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
       // 获取当前标签页的标题和URL
       const { title, url } = tab
       
+      // 获取页面内容
+      const pageContent = await getPageContent(tab.id)
+      
       // 获取所有书签文件夹
       const folders = await getAllFolders()
       
       // 调用AI接口获取最合适的文件夹路径
-      const path = await classifyWebsite(config, folders.map(i => i.path), title)
+      const path = await classifyWebsite(config, folders.map(i => i.path), title, pageContent)
       
       // 查找匹配的文件夹对象
       const folder = folders.find(i => i.path === path)
