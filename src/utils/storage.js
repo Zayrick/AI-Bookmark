@@ -22,6 +22,8 @@ export async function getConfig() {
   if (!config.model) config.model = DEFAULT_MODEL
   if (config.notificationType === undefined) config.notificationType = DEFAULT_NOTIFICATION_TYPE
   if (!config.newPathRootId) config.newPathRootId = DEFAULT_NEW_PATH_ROOT_ID
+  if (config.enableTitleGen === undefined) config.enableTitleGen = true
+  if (config.enableSmartPath === undefined) config.enableSmartPath = true
   
   return config
 }

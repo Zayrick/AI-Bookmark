@@ -7,7 +7,7 @@
 import { getConfig, saveConfig } from '../utils/storage.js'
 import { NOTIFICATION_TYPES } from '../utils/constants.js'
 import { getAllFolders, createBookmark, ensureFolderPath } from '../utils/bookmarks.js'
-import { classifyWebsite, classifyWebsiteAllowNewPath, fetchModelsList, generateBookmarkTitle } from '../services/aiService.js'
+import { classifyWebsite, fetchModelsList, generateBookmarkTitle, smartPathClassifyWebsite } from '../services/aiService.js'
 import { validateAIConfig } from '../utils/validation.js'
 
 // 页面加载完成后初始化
@@ -28,7 +28,7 @@ async function init() {
   const systemNotification = document.getElementById('systemNotification')  // 系统通知单选框
   const browserNotification = document.getElementById('browserNotification')  // 浏览器通知单选框
   const enableTitleGen = document.getElementById('enableTitleGen')  // 启用标题生成开关
-  const enableNewPath = document.getElementById('enableNewPath')    // 允许生成新路径开关
+  const enableSmartPath = document.getElementById('enableSmartPath')  // 启用智能路径推荐开关
   const newPathRootGroup = document.getElementById('newPathRootGroup')
   const newPathRootSelect = document.getElementById('newPathRootSelect')
   const bookmarkButton = document.getElementById('bookmarkButton')  // 收藏按钮
@@ -51,9 +51,8 @@ async function init() {
 
   // 设置标题生成开关状态
   enableTitleGen.checked = config.enableTitleGen !== false  // 默认为true
-  enableNewPath.checked = config.enableNewPath === true     // 默认为false
+  enableSmartPath.checked = config.enableSmartPath !== false // 默认为true
   newPathRootSelect.value = config.newPathRootId || '1'
-  newPathRootGroup.style.display = enableNewPath.checked ? '' : 'none'
   
   // 为各输入元素添加变更事件监听器
   urlInput.addEventListener('change', (e) => updateConfig('chatUrl', e.target.value))
@@ -90,10 +89,9 @@ async function init() {
     updateConfig('enableTitleGen', enableTitleGen.checked)
   })
   
-  // 为新路径开关添加事件监听
-  enableNewPath.addEventListener('change', () => {
-    updateConfig('enableNewPath', enableNewPath.checked)
-    newPathRootGroup.style.display = enableNewPath.checked ? '' : 'none'
+  // 为智能路径推荐开关添加事件监听
+  enableSmartPath.addEventListener('change', () => {
+    updateConfig('enableSmartPath', enableSmartPath.checked)
   })
   
   // 根目录选择变更
@@ -249,10 +247,15 @@ async function handleBookmark() {
       // 调用AI分类服务
       console.log('准备调用AI服务...');
       
-      // 调用分类API，根据是否启用路径生成和标题生成来选择调用方式
-      const result = config.enableNewPath === true 
-        ? await classifyWebsiteAllowNewPath(config, folders.map(i => i.path), title, '', config.enableTitleGen !== false)
-        : await classifyWebsite(config, folders.map(i => i.path), title, '', false, config.enableTitleGen !== false);
+      // 调用分类API，根据是否启用智能路径推荐来选择调用方式
+      let result;
+      if (config.enableSmartPath !== false) {
+        // 启用智能路径推荐，允许生成新路径
+        result = await smartPathClassifyWebsite(config, folders.map(i => i.path), title, '', config.enableTitleGen !== false);
+      } else {
+        // 禁用智能路径推荐，仅在现有路径中选择
+        result = await classifyWebsite(config, folders.map(i => i.path), title, '', false, config.enableTitleGen !== false);
+      }
       
       let path, aiGeneratedTitle;
       
@@ -281,7 +284,8 @@ async function handleBookmark() {
       console.log('AI处理结果:', {
         推荐路径: path,
         生成标题: aiGeneratedTitle,
-        是否启用标题生成: config.enableTitleGen !== false
+        是否启用标题生成: config.enableTitleGen !== false,
+        是否启用智能路径: config.enableSmartPath !== false
       });
       
       // 查找匹配的文件夹对象
@@ -293,7 +297,7 @@ async function handleBookmark() {
       bookmarkButton.disabled = false;
       
       if (!folder) {
-        if (config.enableNewPath === true) {
+        if (config.enableSmartPath !== false) {
           // 不立即创建目录，直接进入确认流程，folderId 传 null
           showBookmarkConfirmDialog(title, url, path, null, aiGeneratedTitle)
         } else {

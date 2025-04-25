@@ -13,7 +13,8 @@ import {
   TITLE_PARAM_NAME,
   TITLE_PARAM_DESCRIPTION,
   SYSTEM_PROMPT,
-  USER_PROMPT
+  USER_PROMPT,
+  SMART_PATH_SYSTEM_PROMPT
 } from '../utils/constants.js'
 
 /**
@@ -43,7 +44,7 @@ export async function classifyWebsite(config, folderPaths, title, pageContent = 
 }
 
 /**
- * 使用AI服务为网站标题推荐最合适的书签文件夹，允许生成新路径
+ * 使用智能路径推荐算法为网站推荐最合适的书签文件夹
  * 
  * @param {Object} config - 配置对象，包含API URL、KEY和模型
  * @param {Array<string>} folderPaths - 可用书签文件夹路径数组
@@ -53,9 +54,18 @@ export async function classifyWebsite(config, folderPaths, title, pageContent = 
  * @returns {Promise<Object>} 返回包含路径和标题的对象
  * @throws {Error} 如果API调用失败或解析失败
  */
-export async function classifyWebsiteAllowNewPath(config, folderPaths, title, pageContent = '', generateTitle = true) {
-  // 直接调用原有函数，但将 allowNewPath 设为 true
-  return await classifyWebsite(config, folderPaths, title, pageContent, true, generateTitle)
+export async function smartPathClassifyWebsite(config, folderPaths, title, pageContent = '', generateTitle = true) {
+  try {
+    // 生成请求负载，使用智能路径生成提示词，允许生成新路径
+    const payload = generatePayload(config, folderPaths, title, pageContent, true, generateTitle, true)
+    // 发送API请求
+    const response = await fetch(config.chatUrl, payload)
+    // 解析响应并返回结果
+    return await parseResponse(response, generateTitle)
+  } catch (err) {
+    // 向上层传递错误
+    throw err
+  }
 }
 
 /**
@@ -117,20 +127,21 @@ export async function fetchModelsList(apiUrl, apiKey) {
  * @param {string} pageContent - 网页内容文本
  * @param {boolean} allowNewPath - 是否允许生成新路径
  * @param {boolean} generateTitle - 是否同时生成标题
+ * @param {boolean} useSmartPath - 是否使用智能路径生成提示词
  * @returns {Object} 包含请求头和体的完整请求配置
  */
-function generatePayload(config, folderPaths, title, pageContent = '', allowNewPath = false, generateTitle = true) {
+function generatePayload(config, folderPaths, title, pageContent = '', allowNewPath = false, generateTitle = true, useSmartPath = false) {
   const { apiKey, model } = config
   
   // 构建对话消息数组
   const messages = [
     {
       role: 'system',
-      content: SYSTEM_PROMPT  // 系统指令：告诉模型如何分类网站
+      content: useSmartPath ? SMART_PATH_SYSTEM_PROMPT : SYSTEM_PROMPT  // 根据是否使用智能路径选择提示词
     },
     {
       role: 'user',
-      content: `${USER_PROMPT} ${title}\n\n${pageContent ? '网页内容：' + pageContent : ''}`  // 用户提问：提供网站标题和内容
+      content: `${USER_PROMPT} ${title}\n\n${pageContent ? '网页内容：' + pageContent : ''}${useSmartPath ? '\n\n用户现有书签路径列表：\n' + folderPaths.map((path, index) => `${index + 1}. ${path}`).join('\n') : ''}`  // 用户提问：提供网站标题、内容和现有路径
     }
   ]
   
@@ -219,15 +230,21 @@ async function parseResponse(response, generateTitle = true) {
     
     // 验证函数名称和参数
     if (fn.name === FUNCTION_NAME && arg[PARAM_NAME]) {
+      // 处理路径 - 如果以"书签栏/"开头，则移除这个前缀
+      let path = arg[PARAM_NAME]
+      if (path.startsWith('书签栏/')) {
+        path = path.substring(4) // "书签栏/"的长度是4
+      }
+      
       if (generateTitle && arg[TITLE_PARAM_NAME]) {
         // 返回包含路径和标题的对象
         return {
-          path: arg[PARAM_NAME],
+          path: path,
           title: arg[TITLE_PARAM_NAME]
         }
       } else {
         // 仅返回路径
-        return arg[PARAM_NAME]
+        return path
       }
     } else {
       throw new Error('没有函数调用结果')

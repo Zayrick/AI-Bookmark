@@ -12,7 +12,7 @@
 import { MENU_ID } from '../utils/constants.js'
 import { getConfig, saveConfig } from '../utils/storage.js'
 import { getAllFolders, createBookmark, ensureFolderPath } from '../utils/bookmarks.js'
-import { classifyWebsite, classifyWebsiteAllowNewPath, generateBookmarkTitle } from '../services/aiService.js'
+import { classifyWebsite, generateBookmarkTitle, smartPathClassifyWebsite } from '../services/aiService.js'
 import { showNotification } from '../services/notificationService.js'
 import { showConfirmDialog } from '../services/dialogService.js'
 import { sendMessageWithInjection } from '../utils/messaging.js'
@@ -78,10 +78,15 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
     // 获取所有书签文件夹
     const folders = await getAllFolders()
     
-    // 调用AI分类服务，根据是否启用路径生成和标题生成来选择调用方式
-    const result = config.enableNewPath === true 
-      ? await classifyWebsiteAllowNewPath(config, folders.map(i => i.path), title, pageContent, config.enableTitleGen !== false)
-      : await classifyWebsite(config, folders.map(i => i.path), title, pageContent, false, config.enableTitleGen !== false);
+    // 调用AI分类服务，根据是否启用智能路径推荐来选择调用方式
+    let result;
+    if (config.enableSmartPath !== false) {
+      // 启用智能路径推荐，允许生成新路径
+      result = await smartPathClassifyWebsite(config, folders.map(i => i.path), title, pageContent, config.enableTitleGen !== false);
+    } else {
+      // 禁用智能路径推荐，仅在现有路径中选择
+      result = await classifyWebsite(config, folders.map(i => i.path), title, pageContent, false, config.enableTitleGen !== false);
+    }
     
     let path, bookmarkTitle;
     
@@ -103,7 +108,7 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
     const folder = folders.find(i => i.path === path)
     
     if (!folder) {
-      if (config.enableNewPath === true) {
+      if (config.enableSmartPath !== false) {
         try {
           const confirmed = await showConfirmDialog(tab, bookmarkTitle, url, path)
           if (confirmed.confirmed) {
