@@ -2,20 +2,22 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>自动收藏设置</title>
+    <title>AI 书签助手</title>
     <style>
       body {
         width: 350px;
-        font-family: Arial, sans-serif;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
         padding: 16px;
         color: #333;
+        background-color: #f9f9fb;
       }
       h2 {
         margin-top: 0;
         color: #4285f4;
         font-size: 18px;
         margin-bottom: 16px;
+        font-weight: 600;
       }
       .form-group {
         margin-bottom: 16px;
@@ -28,11 +30,18 @@
       }
       .form-control {
         width: 100%;
-        padding: 8px;
+        padding: 10px;
         box-sizing: border-box;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
         font-size: 14px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
+      }
+      .form-control:focus {
+        border-color: #4285f4;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(66,133,244,0.2);
       }
       .form-hint {
         color: #666;
@@ -40,7 +49,12 @@
         margin-top: 4px;
       }
       select.form-control {
-        height: 34px;
+        height: 40px;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 30px;
       }
       .radio-group {
         display: flex;
@@ -58,16 +72,24 @@
         background-color: #4285f4;
         color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: 8px;
         cursor: pointer;
         font-size: 14px;
-        padding: 10px;
+        padding: 12px;
         width: 100%;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(66,133,244,0.3);
+        transition: all 0.2s ease;
+      }
+      .btn-primary:hover {
+        background-color: #3b78e7;
+        box-shadow: 0 4px 8px rgba(66,133,244,0.4);
       }
       /* 禁用状态的按钮样式 */
       .btn-primary:disabled {
         background-color: #92b7f8;
         cursor: not-allowed;
+        box-shadow: none;
       }
       /* 加载动画样式 */
       .loading-spinner {
@@ -84,125 +106,174 @@
       @keyframes spinner {
         to {transform: rotate(360deg);}
       }
-      .model-list {
-        max-height: 200px;
-        overflow-y: auto;
-        margin-top: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        display: none;
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #eaeaea;
       }
-      .model-item {
-        padding: 8px 12px;
-        border-bottom: 1px solid #eee;
+      .app-title {
+        display: flex;
+        align-items: center;
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+      .settings-btn {
+        background: none;
+        border: none;
         cursor: pointer;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        transition: background-color 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(66,133,244,0.1);
       }
-      .model-item:hover {
-        background-color: #f5f5f5;
+      .settings-btn svg {
+        width: 20px;
+        height: 20px;
+        fill: #4285f4;
       }
-      .model-item:last-child {
-        border-bottom: none;
+      .settings-btn:hover {
+        background-color: rgba(66,133,244,0.2);
       }
-      .model-name {
-        font-size: 13px;
+      .setup-required {
+        background-color: #fff3cd;
+        color: #856404;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      }
+      .setup-btn {
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 10px 20px;
+        margin-top: 10px;
         font-weight: 500;
-        margin-bottom: 2px;
+        transition: all 0.2s ease;
       }
-      .model-id {
-        font-size: 11px;
-        color: #666;
+      .setup-btn:hover {
+        background-color: #3b78e7;
       }
-      .model-loading {
-        padding: 8px 12px;
-        font-style: italic;
-        color: #666;
-        font-size: 13px;
+      .quick-settings {
+        background-color: white;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
       }
-      .model-search {
-        margin-top: 8px;
+      .settings-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .settings-row:last-child {
+        margin-bottom: 0;
+      }
+      .setting-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+      }
+      /* 美化开关样式 */
+      .toggle-switch {
         position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
       }
-      .search-icon {
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .toggle-slider {
         position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #666;
         cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .3s;
+        border-radius: 34px;
+      }
+      .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+      }
+      input:checked + .toggle-slider {
+        background-color: #4285f4;
+      }
+      input:checked + .toggle-slider:before {
+        transform: translateX(20px);
       }
     </style>
   </head>
   <body>
-    <h2>AI 书签助手设置</h2>
-    
-    <div class="form-group">
-      <label class="form-label">API 地址</label>
-      <input id="chatUrl" type="text" class="form-control" placeholder="例如: https://api.openai.com/v1/chat/completions">
+    <div class="header">
+      <div class="app-title">AI 书签助手</div>
+      <button id="settingsButton" class="settings-btn" title="设置">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+        </svg>
+      </button>
     </div>
     
-    <div class="form-group">
-      <label class="form-label">API 密钥</label>
-      <input id="apiKey" type="password" class="form-control" placeholder="输入您的API密钥">
+    <div id="setupRequired" style="display: none;" class="setup-required">
+      <p>首次使用需要配置 AI 设置</p>
+      <button id="setupButton" class="setup-btn">立即设置</button>
     </div>
-    
-    <div class="form-group">
-      <label class="form-label">AI 模型</label>
-      <input id="modelInput" type="text" class="form-control" placeholder="输入模型名称">
-      <div class="form-hint">输入模型名称，或点击搜索按钮获取可用模型</div>
-      <div class="model-search">
-        <input id="modelSearch" type="text" class="form-control" placeholder="搜索模型...">
-        <span id="searchModelBtn" class="search-icon">🔍</span>
+
+    <div id="mainContent">
+      <div class="quick-settings">
+        <div class="settings-row">
+          <span class="setting-label">智能标题生成</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="enableTitleGen" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        
+        <div class="settings-row">
+          <span class="setting-label">允许创建路径</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="enableSmartPath" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        
+        <div class="settings-row">
+          <span class="setting-label">新路径创建位置</span>
+          <select id="newPathRootSelect" class="form-control" style="width: 160px;">
+            <option value="1">书签栏</option>
+            <option value="2">其他书签</option>
+          </select>
+        </div>
       </div>
-      <div id="modelList" class="model-list"></div>
-    </div>
-    
-    <div class="form-group">
-      <label class="form-label">通知方式</label>
-      <div class="radio-group">
-        <label class="radio-option">
-          <input type="radio" name="notificationType" value="system" id="systemNotification">
-          系统通知
-        </label>
-        <label class="radio-option">
-          <input type="radio" name="notificationType" value="browser" id="browserNotification">
-          浏览器内通知
-        </label>
+      
+      <div class="form-group">
+        <button id="bookmarkButton" class="btn-primary">收藏当前标签页</button>
       </div>
-    </div>
-    
-    <div class="form-group">
-      <label class="form-label">AI 标题生成</label>
-      <div class="radio-group">
-        <label class="radio-option">
-          <input type="checkbox" id="enableTitleGen" checked>
-          启用智能标题生成
-        </label>
-      </div>
-      <div class="form-hint">开启后，AI 将自动生成"品牌 - 功能"格式的标题</div>
-    </div>
-    
-    <div class="form-group">
-      <label class="form-label">AI 路径生成</label>
-      <div class="radio-group">
-        <label class="radio-option">
-          <input type="checkbox" id="enableSmartPath" checked>
-          启用智能路径推荐
-        </label>
-      </div>
-      <div class="form-hint">开启后，AI会分析您现有的书签路径结构，理解您的分类习惯，优先使用已有路径或生成符合您分类习惯的新路径</div>
-    </div>
-    
-    <div class="form-group" id="newPathRootGroup">
-      <label class="form-label">新路径创建位置</label>
-      <select id="newPathRootSelect" class="form-control">
-        <option value="1">书签栏</option>
-        <option value="2">其他书签</option>
-      </select>
-      <div class="form-hint">选择新路径应创建在哪个根文件夹下</div>
-    </div>
-    
-    <div class="form-group">
-      <button id="bookmarkButton" class="btn-primary">收藏当前标签页</button>
     </div>
     
     <script src="../dist/popup.js" type="module"></script>

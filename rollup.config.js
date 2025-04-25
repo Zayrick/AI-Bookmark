@@ -7,9 +7,16 @@ export default [
     }
   },
   {
-    input: 'src/popup/index.js',
+    input: 'src/popup/popup.js',
     output: {
       file: 'dist/popup.js',
+      format: 'esm'
+    }
+  },
+  {
+    input: 'src/popup/settings.js',
+    output: {
+      file: 'dist/settings.js',
       format: 'esm'
     }
   },

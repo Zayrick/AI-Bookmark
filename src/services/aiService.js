@@ -18,7 +18,7 @@ import {
 } from '../utils/constants.js'
 
 /**
- * 使用AI服务为网站标题推荐最合适的书签文件夹
+ * 根据网站标题和内容，为网站推荐最合适的书签文件夹
  * 
  * @param {Object} config - 配置对象，包含API URL、KEY和模型
  * @param {Array<string>} folderPaths - 可用书签文件夹路径数组
@@ -26,17 +26,17 @@ import {
  * @param {string} pageContent - 网页内容
  * @param {boolean} allowNewPath - 是否允许生成新路径
  * @param {boolean} generateTitle - 是否同时生成标题
- * @returns {Promise<Object>} 返回包含路径和标题的对象
+ * @returns {Promise<Object|string>} 返回推荐的文件夹路径，或包含路径和标题的对象
  * @throws {Error} 如果API调用失败或解析失败
  */
 export async function classifyWebsite(config, folderPaths, title, pageContent = '', allowNewPath = false, generateTitle = true) {
   try {
-    // 生成请求负载
-    const payload = generatePayload(config, folderPaths, title, pageContent, allowNewPath, generateTitle)
+    // 生成请求负载，使用标准提示词
+    const payload = generatePayload(config, folderPaths, title, pageContent, allowNewPath, generateTitle, false)
     // 发送API请求
     const response = await fetch(config.chatUrl, payload)
-    // 解析响应并返回结果
-    return await parseResponse(response, generateTitle)
+    // 解析响应
+    return await parseResponse(response, generateTitle, allowNewPath)
   } catch (err) {
     // 向上层传递错误
     throw err
@@ -61,7 +61,7 @@ export async function smartPathClassifyWebsite(config, folderPaths, title, pageC
     // 发送API请求
     const response = await fetch(config.chatUrl, payload)
     // 解析响应并返回结果
-    return await parseResponse(response, generateTitle)
+    return await parseResponse(response, generateTitle, true)
   } catch (err) {
     // 向上层传递错误
     throw err
@@ -212,10 +212,11 @@ function generatePayload(config, folderPaths, title, pageContent = '', allowNewP
  * 
  * @param {Response} response - fetch API的响应对象
  * @param {boolean} generateTitle - 是否解析标题
+ * @param {boolean} allowNewPath - 是否允许生成新路径（智能路径推荐模式）
  * @returns {Promise<Object|string>} 提取的文件夹路径和标题，或仅路径
  * @throws {Error} 如果响应包含错误或格式不符合预期
  */
-async function parseResponse(response, generateTitle = true) {
+async function parseResponse(response, generateTitle = true, allowNewPath = false) {
   // 解析JSON响应
   const json = await response.json()
   
@@ -230,9 +231,9 @@ async function parseResponse(response, generateTitle = true) {
     
     // 验证函数名称和参数
     if (fn.name === FUNCTION_NAME && arg[PARAM_NAME]) {
-      // 处理路径 - 如果以"书签栏/"开头，则移除这个前缀
+      // 处理路径 - 只有在智能路径推荐模式下，才处理"书签栏/"前缀
       let path = arg[PARAM_NAME]
-      if (path.startsWith('书签栏/')) {
+      if (allowNewPath && path.startsWith('书签栏/')) {
         path = path.substring(4) // "书签栏/"的长度是4
       }
       

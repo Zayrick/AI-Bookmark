@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>AI 书签助手设置</title>
+    <style>
+      /* 全局隐藏滚动条 */
+      html, body, div {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+      }
+      html::-webkit-scrollbar, 
+      body::-webkit-scrollbar, 
+      div::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
+        width: 0;
+        height: 0;
+      }
+      
+      html {
+        overflow-y: auto;
+      }
+      
+      body {
+        width: 350px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 16px;
+        color: #333;
+        background-color: #f9f9fb;
+        /* 隐藏滚动条但保持滚动功能 */
+        overflow-y: auto;
+      }
+      
+      /* 为其他有滚动内容的元素也应用相同样式 */
+      .model-list {
+        max-height: 200px;
+        overflow-y: auto;
+        margin-top: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        display: none;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      }
+      h2 {
+        margin-top: 0;
+        color: #4285f4;
+        font-size: 18px;
+        margin-bottom: 16px;
+        font-weight: 600;
+      }
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+      }
+      .form-control {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
+      }
+      .form-control:focus {
+        border-color: #4285f4;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(66,133,244,0.2);
+      }
+      .form-hint {
+        color: #666;
+        font-size: 12px;
+        margin-top: 6px;
+      }
+      select.form-control {
+        height: 40px;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 30px;
+      }
+      .settings-panel {
+        background-color: white;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      }
+      .settings-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .settings-row:last-child {
+        margin-bottom: 0;
+      }
+      .setting-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+      }
+      .radio-group {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+      }
+      /* 美化开关样式 */
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+      }
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .3s;
+        border-radius: 34px;
+      }
+      .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+      }
+      input:checked + .toggle-slider {
+        background-color: #4285f4;
+      }
+      input:checked + .toggle-slider:before {
+        transform: translateX(20px);
+      }
+      .radio-option {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 8px;
+        background-color: #f2f2f2;
+        transition: all 0.2s ease;
+        flex: 1;
+        text-align: center;
+      }
+      .radio-option:has(input:checked) {
+        background-color: #e5f0ff;
+        color: #4285f4;
+        font-weight: 500;
+      }
+      .radio-option input {
+        margin-right: 5px;
+      }
+      .btn-primary {
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 12px;
+        width: 100%;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(66,133,244,0.3);
+        transition: all 0.2s ease;
+      }
+      .btn-primary:hover {
+        background-color: #3b78e7;
+        box-shadow: 0 4px 8px rgba(66,133,244,0.4);
+      }
+      .btn-primary:disabled {
+        background-color: #92b7f8;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+      .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spinner 0.8s linear infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+      @keyframes spinner {
+        to {transform: rotate(360deg);}
+      }
+      .model-item {
+        padding: 10px 12px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+      .model-item:hover {
+        background-color: #f5f8ff;
+      }
+      .model-item:last-child {
+        border-bottom: none;
+      }
+      .model-name {
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 2px;
+        color: #333;
+      }
+      .model-id {
+        font-size: 11px;
+        color: #666;
+      }
+      .model-loading {
+        padding: 12px;
+        font-style: italic;
+        color: #666;
+        font-size: 13px;
+        text-align: center;
+      }
+      .model-search {
+        margin-top: 10px;
+        position: relative;
+      }
+      .search-icon {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #4285f4;
+        cursor: pointer;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        background-color: rgba(66,133,244,0.1);
+        border-radius: 50%;
+        transition: all 0.2s ease;
+      }
+      .search-icon:hover {
+        background-color: rgba(66,133,244,0.2);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #eaeaea;
+      }
+      .app-title {
+        display: flex;
+        align-items: center;
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+      .back-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #4285f4;
+        background-color: rgba(66,133,244,0.1);
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+      .back-btn svg {
+        width: 20px;
+        height: 20px;
+        fill: #4285f4;
+      }
+      .back-btn:hover {
+        background-color: rgba(66,133,244,0.2);
+      }
+      .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 12px;
+        margin-top: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="app-title">AI 配置设置</div>
+      <button id="backButton" class="back-btn" title="返回主页">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+        </svg>
+      </button>
+    </div>
+    
+    <div class="settings-panel">
+      <div class="form-group">
+        <label class="form-label">API 地址</label>
+        <input id="chatUrl" type="text" class="form-control" placeholder="例如: https://api.openai.com/v1/chat/completions">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">API 密钥</label>
+        <input id="apiKey" type="password" class="form-control" placeholder="输入您的API密钥">
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">AI 模型</label>
+        <input id="modelInput" type="text" class="form-control" placeholder="输入模型名称">
+        <div class="form-hint">输入模型名称，或点击搜索按钮获取可用模型</div>
+        <div class="model-search">
+          <input id="modelSearch" type="text" class="form-control" placeholder="搜索模型...">
+          <span id="searchModelBtn" class="search-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+              <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#4285f4"/>
+            </svg>
+          </span>
+        </div>
+        <div id="modelList" class="model-list"></div>
+      </div>
+    </div>
+    
+    <div class="settings-panel">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">通知方式</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="notificationType" value="system" id="systemNotification">
+            系统通知
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="notificationType" value="browser" id="browserNotification">
+            浏览器内通知
+          </label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="settings-panel">
+      <div class="settings-row">
+        <div>
+          <span class="setting-label">智能标题生成</span>
+          <div class="form-hint" style="margin-top: 2px;">自动生成"品牌 - 功能"格式的标题</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="enableTitleGen" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      
+      <div class="settings-row" style="margin-top: 16px;">
+        <div>
+          <span class="setting-label">允许创建路径</span>
+          <div class="form-hint" style="margin-top: 2px;">允许AI创建新的收藏夹目录</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="enableSmartPath" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      
+      <div class="settings-row" style="margin-top: 16px;">
+        <span class="setting-label">新路径创建位置</span>
+        <select id="newPathRootSelect" class="form-control" style="width: 120px;">
+          <option value="1">书签栏</option>
+          <option value="2">其他书签</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <button id="saveSettingsButton" class="btn-primary">保存设置</button>
+    </div>
+    
+    <script src="../dist/settings.js" type="module"></script>
+  </body>
+</html> 
