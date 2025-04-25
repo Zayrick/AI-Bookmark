@@ -26,16 +26,27 @@
 
 1. 将本仓库克隆到本地：
    ```
-   git clone https://github.com/yourusername/AI-Bookmark.git
+   git clone https://github.com/Zayrick/AI-Bookmark.git
    ```
 
-2. 在 Chrome 浏览器地址栏输入 `chrome://extensions` 打开扩展管理页面
+2. 进入项目目录：
+   ```
+   cd AI-Bookmark
+   ```
 
-3. 开启右上角的"开发者模式"
+3. 安装依赖并构建项目：
+   ```
+   npm install
+   npm run build
+   ```
 
-4. 点击"加载已解压的扩展程序"按钮，选择克隆到本地的文件夹
+4. 在 Chrome 浏览器地址栏输入 `chrome://extensions` 打开扩展管理页面
 
-5. 安装完成后，Chrome 浏览器右上角会出现扩展图标
+5. 开启右上角的"开发者模式"
+
+6. 点击"加载已解压的扩展程序"按钮，选择克隆到本地的文件夹
+
+7. 安装完成后，Chrome 浏览器右上角会出现扩展图标
 
 ## 🔍 使用方法
 
