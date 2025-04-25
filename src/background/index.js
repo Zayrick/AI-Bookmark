@@ -12,7 +12,7 @@
 import { MENU_ID } from '../utils/constants.js'
 import { getConfig, saveConfig } from '../utils/storage.js'
 import { getAllFolders, createBookmark } from '../utils/bookmarks.js'
-import { classifyWebsite } from '../services/aiService.js'
+import { classifyWebsite, generateBookmarkTitle } from '../services/aiService.js'
 import { showNotification } from '../services/notificationService.js'
 import { showConfirmDialog } from '../services/dialogService.js'
 
@@ -88,8 +88,22 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
       // 获取所有书签文件夹
       const folders = await getAllFolders()
       
-      // 调用AI接口获取最合适的文件夹路径
-      const path = await classifyWebsite(config, folders.map(i => i.path), title, pageContent)
+      // 根据是否启用标题生成来决定API调用方式
+      let path, bookmarkTitle;
+      
+      if (config.enableTitleGen !== false) {
+        // 并行执行AI服务调用
+        [path, bookmarkTitle] = await Promise.all([
+          // 获取推荐路径
+          classifyWebsite(config, folders.map(i => i.path), title, pageContent),
+          // 生成书签标题
+          generateBookmarkTitle(config, title, pageContent)
+        ]);
+      } else {
+        // 只调用路径分类
+        path = await classifyWebsite(config, folders.map(i => i.path), title, pageContent);
+        bookmarkTitle = title; // 使用原始标题
+      }
       
       // 查找匹配的文件夹对象
       const folder = folders.find(i => i.path === path)
@@ -100,7 +114,7 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
         showNotification(tab, message, config.notificationType)
       } else {
         // 找到匹配的文件夹，显示确认对话框让用户编辑标题
-        const confirmed = await showConfirmDialog(tab, title, url, path)
+        const confirmed = await showConfirmDialog(tab, config.enableTitleGen !== false ? bookmarkTitle : title, url, path)
         
         if (confirmed.confirmed) {
           // 用户确认添加，使用可能编辑过的标题
