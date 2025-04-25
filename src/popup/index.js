@@ -200,12 +200,21 @@ async function searchModels(apiUrl, apiKey, searchTerm = '') {
  */
 async function handleBookmark() {
   try {
+    // 显示按钮加载状态
+    const bookmarkButton = document.getElementById('bookmarkButton');
+    const originalText = bookmarkButton.textContent;
+    bookmarkButton.innerHTML = `<span class="loading-spinner"></span> 处理中...`;
+    bookmarkButton.disabled = true;
+    
     // 验证API配置
     const config = await getConfig()
     const validationMessage = validateAIConfig(config)
     
     if (validationMessage) {
       showPopupMessage(validationMessage, 'error')
+      // 恢复按钮状态
+      bookmarkButton.innerHTML = originalText;
+      bookmarkButton.disabled = false;
       return
     }
     
@@ -214,6 +223,9 @@ async function handleBookmark() {
     
     if (!tabs || tabs.length === 0) {
       showPopupMessage('无法获取当前标签页信息', 'error')
+      // 恢复按钮状态
+      bookmarkButton.innerHTML = originalText;
+      bookmarkButton.disabled = false;
       return
     }
     
@@ -226,6 +238,9 @@ async function handleBookmark() {
       
       if (!folders || folders.length === 0) {
         showPopupMessage('未找到任何书签文件夹', 'error')
+        // 恢复按钮状态
+        bookmarkButton.innerHTML = originalText;
+        bookmarkButton.disabled = false;
         return
       }
       
@@ -257,6 +272,9 @@ async function handleBookmark() {
       
       if (!path) {
         showPopupMessage('AI无法确定合适的文件夹路径', 'error')
+        // 恢复按钮状态
+        bookmarkButton.innerHTML = originalText;
+        bookmarkButton.disabled = false;
         return
       }
       
@@ -269,6 +287,10 @@ async function handleBookmark() {
       // 查找匹配的文件夹对象
       const folder = folders.find(i => i.path === path)
       console.log('匹配的文件夹:', folder);
+      
+      // 恢复按钮状态（虽然即将隐藏）
+      bookmarkButton.innerHTML = originalText;
+      bookmarkButton.disabled = false;
       
       if (!folder) {
         if (config.enableNewPath === true) {
@@ -284,10 +306,17 @@ async function handleBookmark() {
     } catch (innerErr) {
       console.error('获取标签页信息时出错:', innerErr);
       showPopupMessage(`获取标签页信息失败: ${innerErr.message || innerErr.valueOf()}`, 'error');
+      // 恢复按钮状态
+      bookmarkButton.innerHTML = originalText;
+      bookmarkButton.disabled = false;
     }
   } catch (err) {
     console.error('收藏过程发生错误:', err)
     showPopupMessage(`收藏失败！${err.message || err.valueOf()}`, 'error')
+    // 恢复按钮状态
+    const bookmarkButton = document.getElementById('bookmarkButton');
+    bookmarkButton.innerHTML = originalText || '收藏当前标签页';
+    bookmarkButton.disabled = false;
   }
 }
 
@@ -353,6 +382,12 @@ function showBookmarkConfirmDialog(title, url, path, folderId, aiGeneratedTitle)
       }
 
       try {
+        // 添加确认按钮的加载状态
+        const confirmButton = document.getElementById('confirmButton');
+        const originalConfirmText = confirmButton.textContent;
+        confirmButton.innerHTML = `<span class="loading-spinner"></span> 处理中...`;
+        confirmButton.disabled = true;
+        
         let targetFolderId = folderId
         if (!targetFolderId) {
           const cfg = await getConfig()
@@ -364,6 +399,14 @@ function showBookmarkConfirmDialog(title, url, path, folderId, aiGeneratedTitle)
       } catch (err) {
         console.error('创建书签失败:', err)
         showPopupMessage(`收藏失败！${err.message || err.valueOf()}`, 'error')
+        
+        // 恢复确认按钮状态
+        const confirmButton = document.getElementById('confirmButton');
+        if (confirmButton) {
+          confirmButton.innerHTML = originalConfirmText || '确认';
+          confirmButton.disabled = false;
+        }
+        
         resetPopup()
       }
     })

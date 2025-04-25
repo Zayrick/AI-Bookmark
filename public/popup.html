@@ -64,6 +64,26 @@
         padding: 10px;
         width: 100%;
       }
+      /* 禁用状态的按钮样式 */
+      .btn-primary:disabled {
+        background-color: #92b7f8;
+        cursor: not-allowed;
+      }
+      /* 加载动画样式 */
+      .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spinner 0.8s linear infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+      @keyframes spinner {
+        to {transform: rotate(360deg);}
+      }
       .model-list {
         max-height: 200px;
         overflow-y: auto;
