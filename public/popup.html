@@ -162,6 +162,26 @@
     </div>
     
     <div class="form-group">
+      <label class="form-label">AI 新路径生成</label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="checkbox" id="enableNewPath">
+          允许生成新的文件夹路径（调试中，可能不会按照预期工作）
+        </label>
+      </div>
+      <div class="form-hint">关闭时，AI 只会在已有书签路径中进行分类</div>
+    </div>
+    
+    <div class="form-group" id="newPathRootGroup" style="display:none;">
+      <label class="form-label">新路径创建位置</label>
+      <select id="newPathRootSelect" class="form-control">
+        <option value="1">书签栏</option>
+        <option value="2">其他书签</option>
+      </select>
+      <div class="form-hint">选择新路径应创建在哪个根文件夹下</div>
+    </div>
+    
+    <div class="form-group">
       <button id="bookmarkButton" class="btn-primary">收藏当前标签页</button>
     </div>
     

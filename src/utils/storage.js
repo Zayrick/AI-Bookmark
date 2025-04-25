@@ -4,7 +4,7 @@
  * 提供操作Chrome本地存储的工具函数
  */
 
-import { MENU_ID, DEFAULT_API_URL, DEFAULT_MODEL, DEFAULT_NOTIFICATION_TYPE } from './constants.js'
+import { MENU_ID, DEFAULT_API_URL, DEFAULT_MODEL, DEFAULT_NOTIFICATION_TYPE, DEFAULT_NEW_PATH_ROOT_ID } from './constants.js'
 
 /**
  * 从Chrome本地存储中获取扩展配置
@@ -21,6 +21,7 @@ export async function getConfig() {
   if (!config.chatUrl) config.chatUrl = DEFAULT_API_URL
   if (!config.model) config.model = DEFAULT_MODEL
   if (config.notificationType === undefined) config.notificationType = DEFAULT_NOTIFICATION_TYPE
+  if (!config.newPathRootId) config.newPathRootId = DEFAULT_NEW_PATH_ROOT_ID
   
   return config
 }

@@ -6,8 +6,8 @@
 
 import { getConfig, saveConfig } from '../utils/storage.js'
 import { NOTIFICATION_TYPES } from '../utils/constants.js'
-import { getAllFolders, createBookmark } from '../utils/bookmarks.js'
-import { classifyWebsite, fetchModelsList, generateBookmarkTitle } from '../services/aiService.js'
+import { getAllFolders, createBookmark, ensureFolderPath } from '../utils/bookmarks.js'
+import { classifyWebsite, classifyWebsiteAllowNewPath, fetchModelsList, generateBookmarkTitle } from '../services/aiService.js'
 import { validateAIConfig } from '../utils/validation.js'
 
 // 页面加载完成后初始化
@@ -28,6 +28,9 @@ async function init() {
   const systemNotification = document.getElementById('systemNotification')  // 系统通知单选框
   const browserNotification = document.getElementById('browserNotification')  // 浏览器通知单选框
   const enableTitleGen = document.getElementById('enableTitleGen')  // 启用标题生成开关
+  const enableNewPath = document.getElementById('enableNewPath')    // 允许生成新路径开关
+  const newPathRootGroup = document.getElementById('newPathRootGroup')
+  const newPathRootSelect = document.getElementById('newPathRootSelect')
   const bookmarkButton = document.getElementById('bookmarkButton')  // 收藏按钮
   
   // 从本地存储获取配置
@@ -48,6 +51,9 @@ async function init() {
 
   // 设置标题生成开关状态
   enableTitleGen.checked = config.enableTitleGen !== false  // 默认为true
+  enableNewPath.checked = config.enableNewPath === true     // 默认为false
+  newPathRootSelect.value = config.newPathRootId || '1'
+  newPathRootGroup.style.display = enableNewPath.checked ? '' : 'none'
   
   // 为各输入元素添加变更事件监听器
   urlInput.addEventListener('change', (e) => updateConfig('chatUrl', e.target.value))
@@ -82,6 +88,17 @@ async function init() {
   // 为标题生成开关添加事件监听
   enableTitleGen.addEventListener('change', () => {
     updateConfig('enableTitleGen', enableTitleGen.checked)
+  })
+  
+  // 为新路径开关添加事件监听
+  enableNewPath.addEventListener('change', () => {
+    updateConfig('enableNewPath', enableNewPath.checked)
+    newPathRootGroup.style.display = enableNewPath.checked ? '' : 'none'
+  })
+  
+  // 根目录选择变更
+  newPathRootSelect.addEventListener('change', () => {
+    updateConfig('newPathRootId', newPathRootSelect.value)
   })
   
   // 为收藏按钮添加点击事件
@@ -190,7 +207,8 @@ async function handleBookmark() {
       chatUrl: config.chatUrl ? '已设置' : '未设置', 
       apiKey: config.apiKey ? '已设置' : '未设置',
       model: config.model,
-      enableTitleGen: config.enableTitleGen !== false
+      enableTitleGen: config.enableTitleGen !== false,
+      enableNewPath: config.enableNewPath === true
     });
     
     // 验证必要配置
@@ -254,14 +272,16 @@ async function handleBookmark() {
         console.log('准备并行调用AI服务...');
         [path, aiGeneratedTitle] = await Promise.all([
           // 获取推荐路径
-          classifyWebsite(config, folders.map(i => i.path), title),
+          (config.enableNewPath === true ? classifyWebsiteAllowNewPath : classifyWebsite)(config, folders.map(i => i.path), title),
           // 生成书签标题
           generateBookmarkTitle(config, title)
         ]);
       } else {
         // 只调用路径分类
         console.log('准备调用AI服务(仅路径分类)...');
-        path = await classifyWebsite(config, folders.map(i => i.path), title);
+        path = config.enableNewPath === true 
+          ? await classifyWebsiteAllowNewPath(config, folders.map(i => i.path), title)
+          : await classifyWebsite(config, folders.map(i => i.path), title);
         aiGeneratedTitle = title; // 使用原始标题
       }
       
@@ -281,7 +301,12 @@ async function handleBookmark() {
       console.log('匹配的文件夹:', folder);
       
       if (!folder) {
-        showPopupMessage(`书签栏中未发现合适的网站目录，AI 推荐目录路径为: ${path}`, 'warning')
+        if (config.enableNewPath === true) {
+          // 不立即创建目录，直接进入确认流程，folderId 传 null
+          showBookmarkConfirmDialog(title, url, path, null, aiGeneratedTitle)
+        } else {
+          showPopupMessage(`书签栏中未发现合适的网站目录，AI 推荐目录路径为: ${path}`, 'warning')
+        }
       } else {
         // 在popup中显示确认对话
         showBookmarkConfirmDialog(title, url, path, folder.id, aiGeneratedTitle)
@@ -313,10 +338,7 @@ function showBookmarkConfirmDialog(title, url, path, folderId, aiGeneratedTitle)
     path = path || '未知路径';
     aiGeneratedTitle = aiGeneratedTitle || title;
     
-    if (!folderId) {
-      showPopupMessage('无效的文件夹ID', 'error');
-      return;
-    }
+    // folderId 允许为空（当需要新建路径时由确认逻辑生成）
     
     // 隐藏设置表单
     const formGroups = document.querySelectorAll('.form-group:not(:last-child)')
@@ -355,19 +377,24 @@ function showBookmarkConfirmDialog(title, url, path, folderId, aiGeneratedTitle)
     // 添加确认和取消按钮事件
     document.getElementById('confirmButton').addEventListener('click', async () => {
       const newTitle = document.getElementById('bookmarkTitle').value.trim()
-      if (newTitle) {
-        try {
-          await createBookmark(folderId, newTitle, url)
-          showPopupMessage(`已收藏至：${path}`, 'success')
-          // 短暂延迟后关闭popup
-          setTimeout(() => window.close(), 1500)
-        } catch (err) {
-          console.error('创建书签失败:', err)
-          showPopupMessage(`收藏失败！${err.message || err.valueOf()}`, 'error')
-          resetPopup()
-        }
-      } else {
+      if (!newTitle) {
         showPopupMessage('书签标题不能为空', 'error')
+        return
+      }
+
+      try {
+        let targetFolderId = folderId
+        if (!targetFolderId) {
+          const cfg = await getConfig()
+          targetFolderId = await ensureFolderPath(path, cfg.newPathRootId)
+        }
+        await createBookmark(targetFolderId, newTitle, url)
+        showPopupMessage(`已收藏至：${path}`, 'success')
+        setTimeout(() => window.close(), 1500)
+      } catch (err) {
+        console.error('创建书签失败:', err)
+        showPopupMessage(`收藏失败！${err.message || err.valueOf()}`, 'error')
+        resetPopup()
       }
     })
     

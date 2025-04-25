@@ -59,4 +59,44 @@ export async function createBookmark(parentId, title, url) {
     title,
     url
   })
-} 
+}
+
+/**
+ * 确保指定的文件夹路径存在，不存在则递归创建
+ *
+ * @param {string} path - 形如 "Frameworks/Libraries/JavaScript" 的文件夹路径
+ * @param {string} baseFolderId - 基础文件夹ID（可选）
+ * @returns {Promise<string>} 最终（最深层）文件夹的 ID
+ */
+export async function ensureFolderPath(path, baseFolderId = null) {
+  if (!path) throw new Error('无效的文件夹路径')
+
+  // 获取书签栏根节点 ID（或用户指定的根）
+  if (!baseFolderId) {
+    const tree = await chrome.bookmarks.getTree()
+    // 通常 bookmark bar 的节点 id 为 '1'，也可以根据 title 判断
+    const barNode = tree[0].children.find(n => n.id === '1' || /bookmarks?/i.test(n.title) || n.title === '书签栏')
+    baseFolderId = barNode ? barNode.id : tree[0].children[0].id
+  }
+
+  let parentId = baseFolderId
+
+  // 清理首尾斜杠并按 / 分割
+  const segments = path.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean)
+
+  for (const segment of segments) {
+    // 获取父节点下的所有子节点
+    const children = await chrome.bookmarks.getChildren(parentId)
+    // 尝试在子节点中查找同名文件夹
+    let folder = children.find(i => !i.url && i.title === segment)
+
+    if (!folder) {
+      // 若不存在则创建
+      folder = await chrome.bookmarks.create({ parentId, title: segment })
+    }
+
+    parentId = folder.id // 进入下一层
+  }
+
+  return parentId
+}

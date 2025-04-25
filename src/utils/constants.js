@@ -12,6 +12,9 @@ export const DEFAULT_API_URL = 'https://api.openai.com/v1/chat/completions'
 export const DEFAULT_MODEL = 'gpt-3.5-turbo-1106'
 export const DEFAULT_NOTIFICATION_TYPE = 'system'
 
+// 书签路径默认根目录（书签栏 id 通常为 '1'）
+export const DEFAULT_NEW_PATH_ROOT_ID = '1'
+
 // 通知类型
 export const NOTIFICATION_TYPES = {
   SYSTEM: 'system',

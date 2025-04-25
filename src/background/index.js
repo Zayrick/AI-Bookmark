@@ -11,8 +11,8 @@
 
 import { MENU_ID } from '../utils/constants.js'
 import { getConfig, saveConfig } from '../utils/storage.js'
-import { getAllFolders, createBookmark } from '../utils/bookmarks.js'
-import { classifyWebsite, generateBookmarkTitle } from '../services/aiService.js'
+import { getAllFolders, createBookmark, ensureFolderPath } from '../utils/bookmarks.js'
+import { classifyWebsite, classifyWebsiteAllowNewPath, generateBookmarkTitle } from '../services/aiService.js'
 import { showNotification } from '../services/notificationService.js'
 import { showConfirmDialog } from '../services/dialogService.js'
 import { sendMessageWithInjection } from '../utils/messaging.js'
@@ -85,13 +85,15 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
       // 并行执行AI服务调用
       [path, bookmarkTitle] = await Promise.all([
         // 获取推荐路径
-        classifyWebsite(config, folders.map(i => i.path), title, pageContent),
+        (config.enableNewPath === true ? classifyWebsiteAllowNewPath : classifyWebsite)(config, folders.map(i => i.path), title, pageContent),
         // 生成书签标题
         generateBookmarkTitle(config, title, pageContent)
       ]);
     } else {
       // 只调用路径分类
-      path = await classifyWebsite(config, folders.map(i => i.path), title, pageContent);
+      path = config.enableNewPath === true 
+        ? await classifyWebsiteAllowNewPath(config, folders.map(i => i.path), title, pageContent)
+        : await classifyWebsite(config, folders.map(i => i.path), title, pageContent);
       bookmarkTitle = title; // 使用原始标题
     }
     
@@ -99,9 +101,24 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
     const folder = folders.find(i => i.path === path)
     
     if (!folder) {
-      // 如果找不到匹配的文件夹，返回AI推荐的路径
-      message = `书签栏中未发现合适的网站目录，AI 推荐目录路径为: ${path}`
-      showNotification(tab, message, config.notificationType)
+      if (config.enableNewPath === true) {
+        try {
+          const confirmed = await showConfirmDialog(tab, config.enableTitleGen !== false ? bookmarkTitle : title, url, path)
+          if (confirmed.confirmed) {
+            const newFolderId = await ensureFolderPath(path, config.newPathRootId)
+            await createBookmark(newFolderId, confirmed.title, url)
+            message = `已收藏至：${path}`
+            showNotification(tab, message, config.notificationType)
+          }
+        } catch (errCreate) {
+          message = `无法创建新的文件夹路径: ${errCreate.message || errCreate.valueOf()}`
+          showNotification(tab, message, config.notificationType)
+        }
+      } else {
+        // 如果找不到匹配的文件夹，返回AI推荐的路径
+        message = `书签栏中未发现合适的网站目录，AI 推荐目录路径为: ${path}`
+        showNotification(tab, message, config.notificationType)
+      }
     } else {
       // 找到匹配的文件夹，显示确认对话框让用户编辑标题
       const confirmed = await showConfirmDialog(tab, config.enableTitleGen !== false ? bookmarkTitle : title, url, path)
