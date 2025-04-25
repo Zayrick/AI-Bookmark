@@ -8,6 +8,7 @@ import { getConfig, saveConfig } from '../utils/storage.js'
 import { NOTIFICATION_TYPES } from '../utils/constants.js'
 import { getAllFolders, createBookmark } from '../utils/bookmarks.js'
 import { classifyWebsite, fetchModelsList, generateBookmarkTitle } from '../services/aiService.js'
+import { validateAIConfig } from '../utils/validation.js'
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', init)
@@ -193,18 +194,9 @@ async function handleBookmark() {
     });
     
     // 验证必要配置
-    if (!config.chatUrl) {
-      showPopupMessage('请先设置 AI api 地址！', 'error')
-      return
-    } 
-    
-    if (!config.apiKey) {
-      showPopupMessage('请先设置 AI api key！', 'error')
-      return
-    }
-    
-    if (!config.model) {
-      showPopupMessage('请先设置 AI model！', 'error')
+    const invalidMsg = validateAIConfig(config)
+    if (invalidMsg) {
+      showPopupMessage(invalidMsg, 'error')
       return
     }
     

@@ -5,6 +5,7 @@
  */
 
 import { MENU_ID, NOTIFICATION_TYPES } from '../utils/constants.js'
+import { sendMessageWithInjection } from '../utils/messaging.js'
 
 /**
  * 显示通知消息
@@ -79,34 +80,6 @@ function checkTabAvailability(tabId) {
  * @returns {Promise<any>} - 响应结果
  */
 function sendBrowserNotification(tabId, message) {
-  return new Promise(resolve => {
-    // 尝试直接发送
-    chrome.tabs.sendMessage(
-      tabId,
-      { id: MENU_ID, message },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          // 如果发送失败，尝试注入内容脚本后再次发送
-          chrome.scripting.executeScript(
-            { target: { tabId }, files: ['dist/content.js'] },
-            () => {
-              if (chrome.runtime.lastError) {
-                console.log('注入内容脚本失败:', chrome.runtime.lastError.message)
-                resolve(null)
-              } else {
-                // 注入成功，再次发送
-                chrome.tabs.sendMessage(
-                  tabId,
-                  { id: MENU_ID, message },
-                  (resp) => resolve(resp)
-                )
-              }
-            }
-          )
-        } else {
-          resolve(response)
-        }
-      }
-    )
-  })
+  // 借助工具函数统一处理注入与消息发送逻辑
+  return sendMessageWithInjection(tabId, { id: MENU_ID, message })
 } 
