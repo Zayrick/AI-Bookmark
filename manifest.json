@@ -18,7 +18,11 @@
     "contextMenus",
     "bookmarks",
     "notifications",
-    "tabs"
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "dist/background.js",

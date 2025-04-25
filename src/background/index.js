@@ -41,17 +41,31 @@ chrome.runtime.onInstalled.addListener(async () => {
  */
 async function getPageContent(tabId) {
   try {
-    // 发送消息到内容脚本，请求提取页面内容
+    // 尝试直接发送消息获取内容
     const response = await chrome.tabs.sendMessage(tabId, {
       id: MENU_ID,
       action: 'getPageContent'
     });
-    
-    // 返回页面内容，如果没有获取到则返回空字符串
     return response && response.content ? response.content : '';
   } catch (error) {
-    console.error('获取页面内容时出错:', error);
-    return ''; // 出错时返回空字符串
+    // 如果失败，可能是内容脚本未注入，尝试动态注入
+    console.log('首次获取页面内容失败，尝试注入内容脚本:', error?.message);
+    return new Promise((resolve) => {
+      chrome.scripting.executeScript({ target: { tabId }, files: ['dist/content.js'] }, async () => {
+        if (chrome.runtime.lastError) {
+          console.log('注入内容脚本失败:', chrome.runtime.lastError.message);
+          resolve('');
+        } else {
+          try {
+            const resp = await chrome.tabs.sendMessage(tabId, { id: MENU_ID, action: 'getPageContent' });
+            resolve(resp && resp.content ? resp.content : '');
+          } catch (err) {
+            console.error('再次获取页面内容失败:', err);
+            resolve('');
+          }
+        }
+      });
+    });
   }
 }
 

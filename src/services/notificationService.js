@@ -80,10 +80,33 @@ function checkTabAvailability(tabId) {
  */
 function sendBrowserNotification(tabId, message) {
   return new Promise(resolve => {
+    // 尝试直接发送
     chrome.tabs.sendMessage(
-      tabId, 
-      { id: MENU_ID, message }, 
-      response => resolve(response)
+      tabId,
+      { id: MENU_ID, message },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          // 如果发送失败，尝试注入内容脚本后再次发送
+          chrome.scripting.executeScript(
+            { target: { tabId }, files: ['dist/content.js'] },
+            () => {
+              if (chrome.runtime.lastError) {
+                console.log('注入内容脚本失败:', chrome.runtime.lastError.message)
+                resolve(null)
+              } else {
+                // 注入成功，再次发送
+                chrome.tabs.sendMessage(
+                  tabId,
+                  { id: MENU_ID, message },
+                  (resp) => resolve(resp)
+                )
+              }
+            }
+          )
+        } else {
+          resolve(response)
+        }
+      }
     )
   })
 } 

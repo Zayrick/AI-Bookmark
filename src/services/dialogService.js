@@ -17,24 +17,48 @@ import { MENU_ID } from '../utils/constants.js'
  */
 export function showConfirmDialog(tab, title, url, path) {
   return new Promise((resolve) => {
-    chrome.tabs.sendMessage(
-      tab.id,
-      { 
-        id: MENU_ID, 
-        action: 'confirmBookmark',
-        title: title,
-        url: url,
-        path: path
-      },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          console.log('消息发送失败:', chrome.runtime.lastError.message)
-          // 如果无法发送消息，默认为确认添加
-          resolve({ confirmed: true, title: title })
-        } else {
-          resolve(response || { confirmed: false })
+    // 首先尝试发送消息，如果失败则动态注入内容脚本后再次发送
+    function sendMessage() {
+      chrome.tabs.sendMessage(
+        tab.id,
+        {
+          id: MENU_ID,
+          action: 'confirmBookmark',
+          title: title,
+          url: url,
+          path: path
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            console.log('消息发送失败:', chrome.runtime.lastError.message)
+            resolve({ confirmed: true, title: title })
+          } else {
+            resolve(response || { confirmed: false })
+          }
         }
+      )
+    }
+
+    chrome.tabs.sendMessage(tab.id, { ping: true }, (res) => {
+      if (chrome.runtime.lastError) {
+        // 说明内容脚本尚未注入，尝试注入
+        chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['dist/content.js']
+        }, () => {
+          if (chrome.runtime.lastError) {
+            console.log('注入内容脚本失败:', chrome.runtime.lastError.message)
+            // 注入失败时直接使用系统通知提示
+            resolve({ confirmed: true, title: title })
+          } else {
+            // 注入成功后再次发送消息
+            sendMessage()
+          }
+        })
+      } else {
+        // 已经有内容脚本，直接发送
+        sendMessage()
       }
-    )
+    })
   })
 } 
