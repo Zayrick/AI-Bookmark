@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AI 书签助手",
   "description": "利用 AI 实现自动收藏网站到最佳书签栏",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "icons": {
     "16": "public/assets/icon.png",
     "32": "public/assets/icon.png",
