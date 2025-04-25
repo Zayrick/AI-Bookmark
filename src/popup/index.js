@@ -200,63 +200,30 @@ async function searchModels(apiUrl, apiKey, searchTerm = '') {
  */
 async function handleBookmark() {
   try {
-    console.log('开始处理收藏按钮点击事件');
-    // 获取当前配置
+    // 验证API配置
     const config = await getConfig()
-    console.log('获取到配置:', { 
-      chatUrl: config.chatUrl ? '已设置' : '未设置', 
-      apiKey: config.apiKey ? '已设置' : '未设置',
-      model: config.model,
-      enableTitleGen: config.enableTitleGen !== false,
-      enableNewPath: config.enableNewPath === true
-    });
+    const validationMessage = validateAIConfig(config)
     
-    // 验证必要配置
-    const invalidMsg = validateAIConfig(config)
-    if (invalidMsg) {
-      showPopupMessage(invalidMsg, 'error')
+    if (validationMessage) {
+      showPopupMessage(validationMessage, 'error')
       return
     }
     
-    console.log('准备获取当前标签页信息...');
+    // 获取当前标签页
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+    
+    if (!tabs || tabs.length === 0) {
+      showPopupMessage('无法获取当前标签页信息', 'error')
+      return
+    }
     
     try {
-      // 获取当前活动标签页
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      console.log('chrome.tabs.query 返回结果:', tabs);
-      
-      if (!tabs || tabs.length === 0) {
-        showPopupMessage('无法获取当前标签页信息', 'error');
-        return;
-      }
-      
-      const tab = tabs[0];
-      
-      // 检查tab对象的完整性
-      console.log('获取到标签页对象:', {
-        id: tab.id,
-        title: tab.title, 
-        url: tab.url,
-        完整对象: tab
-      });
-      
-      // 获取页面标题和URL并确保它们存在
-      const title = tab.title || ''
-      const url = tab.url || ''
-      
-      if (!url) {
-        showPopupMessage('无法获取当前页面URL', 'error')
-        return
-      }
-      
-      console.log('当前页面信息:', { title, url })
-      
-      // 显示处理中消息
-      showPopupMessage('正在处理...', 'info')
+      const tab = tabs[0]
+      const { title, url } = tab
       
       // 获取所有书签文件夹
-      console.log('准备获取书签文件夹...');
       const folders = await getAllFolders()
+      
       if (!folders || folders.length === 0) {
         showPopupMessage('未找到任何书签文件夹', 'error')
         return
@@ -264,25 +231,28 @@ async function handleBookmark() {
       
       console.log('获取到的文件夹:', folders.length, '个');
       
-      // 根据是否启用标题生成来决定API调用方式
+      // 调用AI分类服务
+      console.log('准备调用AI服务...');
+      
+      // 调用分类API，根据是否启用路径生成和标题生成来选择调用方式
+      const result = config.enableNewPath === true 
+        ? await classifyWebsiteAllowNewPath(config, folders.map(i => i.path), title, '', config.enableTitleGen !== false)
+        : await classifyWebsite(config, folders.map(i => i.path), title, '', false, config.enableTitleGen !== false);
+      
       let path, aiGeneratedTitle;
       
-      if (config.enableTitleGen !== false) {
-        // 并行执行AI服务调用
-        console.log('准备并行调用AI服务...');
-        [path, aiGeneratedTitle] = await Promise.all([
-          // 获取推荐路径
-          (config.enableNewPath === true ? classifyWebsiteAllowNewPath : classifyWebsite)(config, folders.map(i => i.path), title),
-          // 生成书签标题
-          generateBookmarkTitle(config, title)
-        ]);
+      // 检查结果格式并提取路径和标题
+      if (typeof result === 'object' && result.path) {
+        // 新格式：{path, title}
+        path = result.path;
+        aiGeneratedTitle = result.title || title;
       } else {
-        // 只调用路径分类
-        console.log('准备调用AI服务(仅路径分类)...');
-        path = config.enableNewPath === true 
-          ? await classifyWebsiteAllowNewPath(config, folders.map(i => i.path), title)
-          : await classifyWebsite(config, folders.map(i => i.path), title);
-        aiGeneratedTitle = title; // 使用原始标题
+        // 旧格式：直接是路径字符串
+        path = result;
+        // 如果启用了标题生成，则单独调用标题生成服务
+        aiGeneratedTitle = config.enableTitleGen !== false 
+          ? await generateBookmarkTitle(config, title)
+          : title;
       }
       
       if (!path) {

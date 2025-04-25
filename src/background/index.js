@@ -78,23 +78,25 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
     // 获取所有书签文件夹
     const folders = await getAllFolders()
     
-    // 根据是否启用标题生成来决定API调用方式
+    // 调用AI分类服务，根据是否启用路径生成和标题生成来选择调用方式
+    const result = config.enableNewPath === true 
+      ? await classifyWebsiteAllowNewPath(config, folders.map(i => i.path), title, pageContent, config.enableTitleGen !== false)
+      : await classifyWebsite(config, folders.map(i => i.path), title, pageContent, false, config.enableTitleGen !== false);
+    
     let path, bookmarkTitle;
     
-    if (config.enableTitleGen !== false) {
-      // 并行执行AI服务调用
-      [path, bookmarkTitle] = await Promise.all([
-        // 获取推荐路径
-        (config.enableNewPath === true ? classifyWebsiteAllowNewPath : classifyWebsite)(config, folders.map(i => i.path), title, pageContent),
-        // 生成书签标题
-        generateBookmarkTitle(config, title, pageContent)
-      ]);
+    // 检查结果格式并提取路径和标题
+    if (typeof result === 'object' && result.path) {
+      // 新格式：{path, title}
+      path = result.path;
+      bookmarkTitle = result.title || title;
     } else {
-      // 只调用路径分类
-      path = config.enableNewPath === true 
-        ? await classifyWebsiteAllowNewPath(config, folders.map(i => i.path), title, pageContent)
-        : await classifyWebsite(config, folders.map(i => i.path), title, pageContent);
-      bookmarkTitle = title; // 使用原始标题
+      // 旧格式：直接是路径字符串
+      path = result;
+      // 如果启用了标题生成，则单独调用标题生成服务
+      bookmarkTitle = config.enableTitleGen !== false 
+        ? await generateBookmarkTitle(config, title, pageContent)
+        : title;
     }
     
     // 查找匹配的文件夹对象
@@ -103,7 +105,7 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
     if (!folder) {
       if (config.enableNewPath === true) {
         try {
-          const confirmed = await showConfirmDialog(tab, config.enableTitleGen !== false ? bookmarkTitle : title, url, path)
+          const confirmed = await showConfirmDialog(tab, bookmarkTitle, url, path)
           if (confirmed.confirmed) {
             const newFolderId = await ensureFolderPath(path, config.newPathRootId)
             await createBookmark(newFolderId, confirmed.title, url)
@@ -121,7 +123,7 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
       }
     } else {
       // 找到匹配的文件夹，显示确认对话框让用户编辑标题
-      const confirmed = await showConfirmDialog(tab, config.enableTitleGen !== false ? bookmarkTitle : title, url, path)
+      const confirmed = await showConfirmDialog(tab, bookmarkTitle, url, path)
       
       if (confirmed.confirmed) {
         // 用户确认添加，使用可能编辑过的标题

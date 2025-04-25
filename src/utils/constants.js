@@ -26,10 +26,12 @@ export const TEMPERATURE = 0.2
 
 // 函数调用配置
 export const FUNCTION_NAME = 'classify_the_website'
-export const FUNCTION_DESCRIPTION = 'Automatically match the best folder path based on the website title and content'
+export const FUNCTION_DESCRIPTION = '根据网站标题和内容自动匹配最佳的文件夹路径并生成简洁的书签标题'
 export const PARAM_NAME = 'folder_path'
-export const PARAM_DESCRIPTION = 'Folder path separated by /'
+export const PARAM_DESCRIPTION = '以/分隔的文件夹路径'
+export const TITLE_PARAM_NAME = 'bookmark_title'
+export const TITLE_PARAM_DESCRIPTION = '简洁的书签标题，格式为"品牌 - 功能"'
 
-// 提示词
-export const SYSTEM_PROMPT = 'Please classify the website into the most appropriate folder path based on the title of the website, the website content, and the meaning of the folder name. The website content is more important than the title when determining the classification.'
-export const USER_PROMPT = 'The website title is:' 
+// AI提示词
+export const SYSTEM_PROMPT = '你是一个智能书签助手，需要完成两项任务：\n1. 根据网站的标题和内容，将网站分类到最合适的文件夹路径。在确定分类时，网站内容比标题更重要。\n2. 生成一个简洁的书签标题。标题格式为"品牌 - 网页内容的作用"。例如："淘宝 - 购物"，"CSDN - Office安装教学"。品牌名应该保持原样，不要翻译。'
+export const USER_PROMPT = '网站标题是：'
