@@ -50,6 +50,12 @@ async function init() {
     // 根据智能路径推荐的状态来控制保存位置选项的显示
     newPathRootRow.style.display = enableSmartPath.checked ? 'flex' : 'none'
     
+    // 根据初始状态设置margin-bottom
+    const smartPathRow = document.getElementById('smartPathRow')
+    if (smartPathRow) {
+      smartPathRow.style.marginBottom = enableSmartPath.checked ? '16px' : '0'
+    }
+    
     // 为快捷设置添加变更事件
     enableTitleGen.addEventListener('change', () => {
       updateConfig('enableTitleGen', enableTitleGen.checked)
@@ -59,6 +65,12 @@ async function init() {
       updateConfig('enableSmartPath', enableSmartPath.checked)
       // 当智能路径推荐开关状态变化时，更新保存位置选项的显示状态
       newPathRootRow.style.display = enableSmartPath.checked ? 'flex' : 'none'
+      
+      // 根据开关状态设置margin-bottom
+      const smartPathRow = document.getElementById('smartPathRow')
+      if (smartPathRow) {
+        smartPathRow.style.marginBottom = enableSmartPath.checked ? '16px' : '0'
+      }
     })
     
     newPathRootSelect.addEventListener('change', () => {

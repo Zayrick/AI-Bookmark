@@ -55,6 +55,12 @@ async function init() {
   // 根据智能路径推荐的状态来控制新路径创建位置选项的显示
   newPathRootRow.style.display = enableSmartPath.checked ? 'flex' : 'none'
   
+  // 根据初始状态设置margin-bottom
+  const smartPathRow = document.getElementById('smartPathRow')
+  if (smartPathRow) {
+    smartPathRow.style.marginBottom = enableSmartPath.checked ? '12px' : '0'
+  }
+  
   // 为各输入元素添加变更事件监听器
   urlInput.addEventListener('change', (e) => updateConfig('chatUrl', e.target.value))
   keyInput.addEventListener('change', (e) => updateConfig('apiKey', e.target.value))
@@ -95,6 +101,12 @@ async function init() {
     updateConfig('enableSmartPath', enableSmartPath.checked)
     // 当智能路径推荐开关状态变化时，更新新路径创建位置选项的显示状态
     newPathRootRow.style.display = enableSmartPath.checked ? 'flex' : 'none'
+    
+    // 根据开关状态设置margin-bottom
+    const smartPathRow = document.getElementById('smartPathRow')
+    if (smartPathRow) {
+      smartPathRow.style.marginBottom = enableSmartPath.checked ? '12px' : '0'
+    }
   })
   
   // 根目录选择变更
