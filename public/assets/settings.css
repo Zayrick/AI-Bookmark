@@ -1,0 +1,150 @@
+/* settings.html 特有样式 */
+.model-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  display: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  background-color: #f2f2f2;
+  transition: all 0.2s ease;
+  flex: 1;
+  text-align: center;
+}
+
+.radio-option:has(input:checked) {
+  background-color: #e5f0ff;
+  color: #4285f4;
+  font-weight: 500;
+}
+
+.model-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.model-item:hover {
+  background-color: #f5f8ff;
+}
+
+.model-item:last-child {
+  border-bottom: none;
+}
+
+.model-name {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 2px;
+  color: #333;
+}
+
+.model-id {
+  font-size: 11px;
+  color: #666;
+}
+
+.model-loading {
+  padding: 12px;
+  font-style: italic;
+  color: #666;
+  font-size: 13px;
+  text-align: center;
+}
+
+.model-search {
+  margin-top: 10px;
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4285f4;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  background-color: rgba(66,133,244,0.1);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.search-icon:hover {
+  background-color: rgba(66,133,244,0.2);
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4285f4;
+  background-color: rgba(66,133,244,0.1);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.back-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: #4285f4;
+}
+
+.back-btn:hover {
+  background-color: rgba(66,133,244,0.2);
+}
+
+.github-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(66,133,244,0.1);
+  text-decoration: none;
+}
+
+.github-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: #4285f4;
+}
+
+.github-btn:hover {
+  background-color: rgba(66,133,244,0.2);
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 12px;
+  margin-top: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+} 
