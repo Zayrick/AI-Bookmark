@@ -38,5 +38,14 @@
       ],
       "run_at": "document_idle"
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "public/manage.html",
+        "dist/manage.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
   ]
 }

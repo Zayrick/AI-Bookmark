@@ -22,6 +22,7 @@ async function init() {
   const setupRequired = document.getElementById('setupRequired')
   const mainContent = document.getElementById('mainContent')
   const settingsButton = document.getElementById('settingsButton')
+  const manageButton = document.getElementById('manageButton')
   const setupButton = document.getElementById('setupButton')
   const bookmarkButton = document.getElementById('bookmarkButton')
   const enableTitleGen = document.getElementById('enableTitleGen')
@@ -54,7 +55,7 @@ async function init() {
     })
   }
   
-  // 添加设置按钮点击事件
+  // 添加各种按钮点击事件
   settingsButton.addEventListener('click', () => {
     window.location.href = 'settings.html'
   })
@@ -62,6 +63,12 @@ async function init() {
   // 添加设置向导按钮点击事件
   setupButton.addEventListener('click', () => {
     window.location.href = 'settings.html'
+  })
+  
+  // 跳转整理页按钮
+  manageButton.addEventListener('click', () => {
+    const url = chrome.runtime.getURL('public/manage.html')
+    chrome.tabs.create({ url })
   })
   
   // 为收藏按钮添加点击事件

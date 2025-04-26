@@ -26,5 +26,12 @@ export default [
       file: 'dist/content.js',
       format: 'esm'
     }
+  },
+  {
+    input: 'src/manage/index.js',
+    output: {
+      file: 'dist/manage.js',
+      format: 'esm'
+    }
   }
 ]

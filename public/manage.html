@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>书签整理 | AI 书签助手</title>
+    <style>
+      /* 基本重置 */
+      html,body{margin:0;padding:0;height:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f9f9fb;color:#333;}
+      /* 容器采用flex两栏布局 */
+      .layout{display:flex;height:100%;width:100%;}
+      .column{padding:16px;box-sizing:border-box;overflow:auto;}
+      .left{width:35%;min-width:280px;border-right:1px solid #eaeaea;background-color:#fff;}
+      .right{flex:1;background-color:#fafafa;position:relative;}
+      .placeholder{border:2px dashed #d0d0d0;border-radius:8px;display:flex;align-items:center;justify-content:center;height:100%;color:#909090;font-size:14px;}
+      
+      /* 书签树样式 */
+      .tree-root {font-family:'Segoe UI',Arial,sans-serif;font-size:14px;}
+      .folder-item, .bookmark-item {padding:6px 8px;margin:2px 0;border-radius:4px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      .folder-item:hover, .bookmark-item:hover {background-color:#f0f5ff;}
+      .folder-item {color:#333;font-weight:500;}
+      .bookmark-item {color:#555;}
+      .folder {color:#ffa000;margin-right:6px;}
+      .url {color:#1a73e8;margin-right:6px;}
+      .selected {background-color:#e3f2fd;}
+      
+      /* 顶部工具栏样式 */
+      .top-bar {display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #eaeaea;}
+      .title {font-size:18px;font-weight:600;color:#333;}
+      .search-box {padding:6px 12px;border:1px solid #ddd;border-radius:4px;margin-left:auto;width:120px;}
+      
+      /* 聊天窗口样式 */
+      .chat-container {display:flex;flex-direction:column;height:100%;}
+      .chat-messages {flex:1;overflow-y:auto;padding:10px 0;}
+      .chat-input-container {display:flex;margin-top:10px;border-top:1px solid #eaeaea;padding-top:10px;}
+      .chat-input {flex:1;padding:10px;border:1px solid #ddd;border-radius:4px;resize:none;min-height:80px;}
+      .chat-send {background:#4285f4;color:white;border:none;border-radius:4px;padding:0 16px;margin-left:8px;cursor:pointer;}
+      .chat-send:hover {background:#3b78e7;}
+      .message {margin-bottom:16px;display:flex;flex-direction:column;}
+      .message-user {align-self:flex-end;background:#e3f2fd;padding:12px;border-radius:12px;max-width:80%;margin-right:10px;}
+      .message-ai {align-self:flex-start;background:#f1f1f1;padding:12px;border-radius:12px;max-width:80%;margin-left:10px;}
+      .message-content {margin:0;white-space:pre-wrap;word-break:break-word;}
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <!-- 左侧书签树列表 -->
+      <div id="bookmarkTree" class="column left">
+        <div class="top-bar">
+          <div class="title">我的书签</div>
+          <input type="text" class="search-box" id="searchBox" placeholder="搜索书签...">
+        </div>
+        <div class="tree-container">
+          <!-- 书签树将由JS动态渲染 -->
+          <div class="placeholder">加载中...</div>
+        </div>
+      </div>
+      <!-- 右侧 AI Chat 窗口 -->
+      <div id="chatWindow" class="column right">
+        <div class="chat-container">
+          <div class="top-bar">
+            <div class="title">AI 书签整理助手</div>
+          </div>
+          <div class="chat-messages" id="chatMessages">
+            <div class="message message-ai">
+              <p class="message-content">你好！我是 AI 书签整理助手。我可以帮你：
+1. 查找重复书签
+2. 整理/移动书签到合适文件夹
+3. 重命名书签使其更简洁
+4. 删除无用书签
+
+请输入你的需求，例如"帮我查找重复的书签"或"帮我整理编程相关的书签"。</p>
+            </div>
+          </div>
+          <div class="chat-input-container">
+            <textarea id="chatInput" class="chat-input" placeholder="输入你的书签整理需求..."></textarea>
+            <button id="sendButton" class="chat-send">发送</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 引入脚本：由 rollup 构建后的文件 -->
+    <script type="module" src="../dist/manage.js"></script>
+  </body>
+</html> 
