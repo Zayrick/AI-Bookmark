@@ -29,8 +29,6 @@ async function init() {
   const browserNotification = document.getElementById('browserNotification')  // 浏览器通知单选框
   const enableTitleGen = document.getElementById('enableTitleGen')  // 启用标题生成开关
   const enableSmartPath = document.getElementById('enableSmartPath')  // 启用智能路径推荐开关
-  const newPathRootGroup = document.getElementById('newPathRootGroup')
-  const newPathRootSelect = document.getElementById('newPathRootSelect')
   const bookmarkButton = document.getElementById('bookmarkButton')  // 收藏按钮
   
   // 从本地存储获取配置
@@ -52,7 +50,6 @@ async function init() {
   // 设置标题生成开关状态
   enableTitleGen.checked = config.enableTitleGen !== false  // 默认为true
   enableSmartPath.checked = config.enableSmartPath !== false // 默认为true
-  newPathRootSelect.value = config.newPathRootId || '1'
   
   // 为各输入元素添加变更事件监听器
   urlInput.addEventListener('change', (e) => updateConfig('chatUrl', e.target.value))
@@ -92,11 +89,6 @@ async function init() {
   // 为智能路径推荐开关添加事件监听
   enableSmartPath.addEventListener('change', () => {
     updateConfig('enableSmartPath', enableSmartPath.checked)
-  })
-  
-  // 根目录选择变更
-  newPathRootSelect.addEventListener('change', () => {
-    updateConfig('newPathRootId', newPathRootSelect.value)
   })
   
   // 为收藏按钮添加点击事件
@@ -394,8 +386,7 @@ function showBookmarkConfirmDialog(title, url, path, folderId, aiGeneratedTitle)
         
         let targetFolderId = folderId
         if (!targetFolderId) {
-          const cfg = await getConfig()
-          targetFolderId = await ensureFolderPath(path, cfg.newPathRootId)
+          targetFolderId = await ensureFolderPath(path)
         }
         await createBookmark(targetFolderId, newTitle, url)
         showPopupMessage(`已收藏至：${path}`, 'success')

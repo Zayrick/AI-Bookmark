@@ -26,8 +26,6 @@ async function init() {
   const bookmarkButton = document.getElementById('bookmarkButton')
   const enableTitleGen = document.getElementById('enableTitleGen')
   const enableSmartPath = document.getElementById('enableSmartPath')
-  const newPathRootSelect = document.getElementById('newPathRootSelect')
-  const newPathRootRow = newPathRootSelect.closest('.settings-row') // 获取保存位置行元素
   
   // 从本地存储获取配置
   const config = await getConfig()
@@ -45,16 +43,6 @@ async function init() {
     // 填充快捷设置值
     enableTitleGen.checked = config.enableTitleGen !== false // 默认为true
     enableSmartPath.checked = config.enableSmartPath !== false // 默认为true
-    newPathRootSelect.value = config.newPathRootId || '1'
-    
-    // 根据智能路径推荐的状态来控制保存位置选项的显示
-    newPathRootRow.style.display = enableSmartPath.checked ? 'flex' : 'none'
-    
-    // 根据初始状态设置margin-bottom
-    const smartPathRow = document.getElementById('smartPathRow')
-    if (smartPathRow) {
-      smartPathRow.style.marginBottom = enableSmartPath.checked ? '16px' : '0'
-    }
     
     // 为快捷设置添加变更事件
     enableTitleGen.addEventListener('change', () => {
@@ -63,18 +51,6 @@ async function init() {
     
     enableSmartPath.addEventListener('change', () => {
       updateConfig('enableSmartPath', enableSmartPath.checked)
-      // 当智能路径推荐开关状态变化时，更新保存位置选项的显示状态
-      newPathRootRow.style.display = enableSmartPath.checked ? 'flex' : 'none'
-      
-      // 根据开关状态设置margin-bottom
-      const smartPathRow = document.getElementById('smartPathRow')
-      if (smartPathRow) {
-        smartPathRow.style.marginBottom = enableSmartPath.checked ? '16px' : '0'
-      }
-    })
-    
-    newPathRootSelect.addEventListener('change', () => {
-      updateConfig('newPathRootId', newPathRootSelect.value)
     })
   }
   
@@ -293,7 +269,7 @@ function showBookmarkConfirmDialog(title, url, path, folderId, aiGeneratedTitle)
         let targetFolderId = folderId;
         if (!targetFolderId) {
           const cfg = await getConfig();
-          targetFolderId = await ensureFolderPath(path, cfg.newPathRootId);
+          targetFolderId = await ensureFolderPath(path);
         }
         
         await createBookmark(targetFolderId, newTitle, url);

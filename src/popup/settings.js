@@ -26,8 +26,6 @@ async function init() {
   const browserNotification = document.getElementById('browserNotification')  // 浏览器通知单选框
   const enableTitleGen = document.getElementById('enableTitleGen')  // 启用标题生成开关
   const enableSmartPath = document.getElementById('enableSmartPath')  // 启用智能路径推荐开关
-  const newPathRootSelect = document.getElementById('newPathRootSelect')
-  const newPathRootRow = newPathRootSelect.closest('.settings-row') // 获取新路径创建位置行元素
   const saveSettingsButton = document.getElementById('saveSettingsButton')  // 保存设置按钮
   const backButton = document.getElementById('backButton')  // 返回按钮
   
@@ -50,16 +48,6 @@ async function init() {
   // 设置标题生成开关状态
   enableTitleGen.checked = config.enableTitleGen !== false  // 默认为true
   enableSmartPath.checked = config.enableSmartPath !== false // 默认为true
-  newPathRootSelect.value = config.newPathRootId || '1'
-  
-  // 根据智能路径推荐的状态来控制新路径创建位置选项的显示
-  newPathRootRow.style.display = enableSmartPath.checked ? 'flex' : 'none'
-  
-  // 根据初始状态设置margin-bottom
-  const smartPathRow = document.getElementById('smartPathRow')
-  if (smartPathRow) {
-    smartPathRow.style.marginBottom = enableSmartPath.checked ? '12px' : '0'
-  }
   
   // 为各输入元素添加变更事件监听器
   urlInput.addEventListener('change', (e) => updateConfig('chatUrl', e.target.value))
@@ -99,19 +87,6 @@ async function init() {
   // 为智能路径推荐开关添加事件监听
   enableSmartPath.addEventListener('change', () => {
     updateConfig('enableSmartPath', enableSmartPath.checked)
-    // 当智能路径推荐开关状态变化时，更新新路径创建位置选项的显示状态
-    newPathRootRow.style.display = enableSmartPath.checked ? 'flex' : 'none'
-    
-    // 根据开关状态设置margin-bottom
-    const smartPathRow = document.getElementById('smartPathRow')
-    if (smartPathRow) {
-      smartPathRow.style.marginBottom = enableSmartPath.checked ? '12px' : '0'
-    }
-  })
-  
-  // 根目录选择变更
-  newPathRootSelect.addEventListener('change', () => {
-    updateConfig('newPathRootId', newPathRootSelect.value)
   })
   
   // 添加保存设置按钮事件
@@ -142,7 +117,6 @@ async function handleSaveSettings() {
       notificationType: document.querySelector('input[name="notificationType"]:checked').value,
       enableTitleGen: document.getElementById('enableTitleGen').checked,
       enableSmartPath: document.getElementById('enableSmartPath').checked,
-      newPathRootId: document.getElementById('newPathRootSelect').value,
       isConfigured: true
     }
     

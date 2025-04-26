@@ -112,7 +112,7 @@ chrome.contextMenus.onClicked.addListener(async (item, tab) => {
         try {
           const confirmed = await showConfirmDialog(tab, bookmarkTitle, url, path)
           if (confirmed.confirmed) {
-            const newFolderId = await ensureFolderPath(path, config.newPathRootId)
+            const newFolderId = await ensureFolderPath(path)
             await createBookmark(newFolderId, confirmed.title, url)
             message = `已收藏至：${path}`
             showNotification(tab, message, config.notificationType)

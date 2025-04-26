@@ -231,11 +231,8 @@ async function parseResponse(response, generateTitle = true, allowNewPath = fals
     
     // 验证函数名称和参数
     if (fn.name === FUNCTION_NAME && arg[PARAM_NAME]) {
-      // 处理路径 - 只有在智能路径推荐模式下，才处理"书签栏/"前缀
-      let path = arg[PARAM_NAME]
-      if (allowNewPath && path.startsWith('书签栏/')) {
-        path = path.substring(4) // "书签栏/"的长度是4
-      }
+      // 直接使用 AI 返回的路径
+      const path = arg[PARAM_NAME]
       
       if (generateTitle && arg[TITLE_PARAM_NAME]) {
         // 返回包含路径和标题的对象
