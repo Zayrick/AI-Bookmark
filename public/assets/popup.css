@@ -81,4 +81,44 @@
 .btn-group {
   display: flex;
   gap: 8px;
+}
+
+/* 确认对话框动画 */
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.confirm-dialog {
+  animation: dialogFadeIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 添加确认对话框中的按钮过渡效果 */
+.confirm-dialog .btn-group button {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              background-color 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.confirm-dialog .btn-group button:hover {
+  transform: translateY(-2px);
+}
+
+.confirm-dialog .btn-group button:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.beta-tag {
+  font-size: 10px;
+  color: #ff3b30;
+  position: relative;
+  top: -1px;
+  margin-left: 2px;
+  font-weight: bold;
 } 

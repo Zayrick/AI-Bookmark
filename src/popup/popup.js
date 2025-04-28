@@ -57,12 +57,18 @@ async function init() {
   
   // 添加各种按钮点击事件
   settingsButton.addEventListener('click', () => {
-    window.location.href = 'settings.html'
+    document.body.classList.add('page-transition');
+    setTimeout(() => {
+      window.location.href = 'settings.html';
+    }, 400);
   })
   
   // 添加设置向导按钮点击事件
   setupButton.addEventListener('click', () => {
-    window.location.href = 'settings.html'
+    document.body.classList.add('page-transition');
+    setTimeout(() => {
+      window.location.href = 'settings.html';
+    }, 400);
   })
   
   // 跳转整理页按钮
@@ -83,7 +89,15 @@ async function handleBookmark() {
     // 显示按钮加载状态
     const bookmarkButton = document.getElementById('bookmarkButton');
     const originalText = bookmarkButton.textContent;
-    bookmarkButton.innerHTML = `<span class="loading-spinner"></span> 处理中...`;
+    
+    // 使用AI思考动画替代原来的加载动画
+    bookmarkButton.innerHTML = `
+      <div class="ai-thinking">
+        <div class="ai-thinking-circle"></div>
+        <div class="ai-thinking-circle"></div>
+      </div>
+      <span>AI分析中</span>
+    `;
     bookmarkButton.disabled = true;
     
     // 验证API配置
@@ -125,6 +139,19 @@ async function handleBookmark() {
       }
       
       console.log('获取到的文件夹:', folders.length, '个');
+      
+      // 更新按钮为AI处理动画
+      bookmarkButton.innerHTML = `
+        <div class="ai-processing">
+          <div class="ai-processing-dots">
+            <div class="ai-dot"></div>
+            <div class="ai-dot"></div>
+            <div class="ai-dot"></div>
+            <div class="ai-dot"></div>
+          </div>
+        </div>
+        <span>AI智能分类中</span>
+      `;
       
       // 调用AI分类服务
       console.log('准备调用AI服务...');
@@ -270,7 +297,18 @@ function showBookmarkConfirmDialog(title, url, path, folderId, aiGeneratedTitle)
         // 添加确认按钮的加载状态
         const confirmButton = document.getElementById('confirmButton');
         const originalConfirmText = confirmButton.textContent;
-        confirmButton.innerHTML = `<span class="loading-spinner"></span> 处理中...`;
+        
+        // 使用AI处理动画
+        confirmButton.innerHTML = `
+          <div class="ai-processing">
+            <div class="ai-processing-dots">
+              <div class="ai-dot"></div>
+              <div class="ai-dot"></div>
+              <div class="ai-dot"></div>
+            </div>
+          </div>
+          <span>保存中</span>
+        `;
         confirmButton.disabled = true;
         
         let targetFolderId = folderId;
@@ -280,8 +318,15 @@ function showBookmarkConfirmDialog(title, url, path, folderId, aiGeneratedTitle)
         }
         
         await createBookmark(targetFolderId, newTitle, url);
-        showPopupMessage(`已收藏至：${path}`, 'success');
-        setTimeout(() => window.close(), 1500);
+        
+        // 创建更优雅的成功通知
+        showBookmarkSuccessMessage(path);
+        
+        // 添加页面过渡动画
+        setTimeout(() => {
+          document.body.classList.add('page-transition');
+          setTimeout(() => window.close(), 400);
+        }, 1500);
       } catch (err) {
         console.error('创建书签失败:', err);
         showPopupMessage(`收藏失败！${err.message || err.valueOf()}`, 'error');
@@ -303,6 +348,41 @@ function showBookmarkConfirmDialog(title, url, path, folderId, aiGeneratedTitle)
     showPopupMessage(`操作失败：${err.message || err.valueOf()}`, 'error');
     resetPopup();
   }
+}
+
+/**
+ * 显示收藏成功的特殊消息
+ * 
+ * @param {string} path - 书签保存路径
+ */
+function showBookmarkSuccessMessage(path) {
+  // 删除现有的消息元素
+  const existingMessage = document.querySelector('.popup-message');
+  if (existingMessage) {
+    existingMessage.remove();
+  }
+  
+  // 创建新的消息元素
+  const messageElement = document.createElement('div');
+  messageElement.className = 'popup-message bookmark-success';
+  
+  messageElement.innerHTML = `
+    <div style="margin-bottom: 8px; display: flex; justify-content: center; align-items: center;">
+      <span class="message-icon">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path fill="currentColor" d="M12,2C6.486,2,2,6.486,2,12s4.486,10,10,10s10-4.486,10-10S17.514,2,12,2z M12,20c-4.411,0-8-3.589-8-8s3.589-8,8-8 s8,3.589,8,8S16.411,20,12,20z M9.999,13.587L7.7,11.292l-1.412,1.416l3.713,3.705l6.706-6.706l-1.414-1.414L9.999,13.587z"/>
+        </svg>
+      </span>
+      <span class="message-text" style="font-weight: 600;">收藏成功</span>
+    </div>
+    <div style="font-size: 13px; opacity: 0.9; word-break: break-word; line-height: 1.4;">
+      已保存至：${path}
+    </div>
+    <div class="progress-bar"></div>
+  `;
+  
+  // 添加到页面
+  document.body.appendChild(messageElement);
 }
 
 /**
@@ -328,56 +408,43 @@ function resetPopup() {
 }
 
 /**
- * 显示popup内的消息提示
+ * 在页面上显示消息提示
  * 
- * @param {string} message - 消息内容
- * @param {string} type - 消息类型 (info, success, warning, error)
+ * @param {string} message - 要显示的消息
+ * @param {string} type - 消息类型 (info, success, error)
  */
 function showPopupMessage(message, type = 'info') {
-  // 移除现有消息
-  const existingMsg = document.getElementById('messageDiv');
-  if (existingMsg) existingMsg.remove();
-  
-  // 创建消息元素
-  const messageDiv = document.createElement('div');
-  messageDiv.id = 'messageDiv';
-  messageDiv.style.padding = '10px';
-  messageDiv.style.margin = '10px 0';
-  messageDiv.style.borderRadius = '4px';
-  messageDiv.style.textAlign = 'center';
-  
-  // 设置样式根据消息类型
-  switch (type) {
-    case 'success':
-      messageDiv.style.backgroundColor = '#d4edda';
-      messageDiv.style.color = '#155724';
-      break;
-    case 'warning':
-      messageDiv.style.backgroundColor = '#fff3cd';
-      messageDiv.style.color = '#856404';
-      break;
-    case 'error':
-      messageDiv.style.backgroundColor = '#f8d7da';
-      messageDiv.style.color = '#721c24';
-      break;
-    default: // info
-      messageDiv.style.backgroundColor = '#d1ecf1';
-      messageDiv.style.color = '#0c5460';
+  // 删除现有的消息元素
+  const existingMessage = document.querySelector('.popup-message');
+  if (existingMessage) {
+    existingMessage.remove();
   }
   
-  messageDiv.textContent = message;
+  // 图标定义
+  const icons = {
+    success: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,2C6.486,2,2,6.486,2,12s4.486,10,10,10s10-4.486,10-10S17.514,2,12,2z M12,20c-4.411,0-8-3.589-8-8s3.589-8,8-8 s8,3.589,8,8S16.411,20,12,20z M9.999,13.587L7.7,11.292l-1.412,1.416l3.713,3.705l6.706-6.706l-1.414-1.414L9.999,13.587z"/></svg>',
+    error: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M11.953,2C6.465,2,2,6.486,2,12s4.486,10,10,10s10-4.486,10-10S17.493,2,11.953,2z M12,20c-4.411,0-8-3.589-8-8 s3.567-8,8-8c4.412,0,8,3.589,8,8S16.413,20,12,20z M13,7h-2v6h2V7z M13,15h-2v2h2V15z"/></svg>',
+    info: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,2C6.486,2,2,6.486,2,12c0,5.514,4.486,10,10,10c5.514,0,10-4.486,10-10C22,6.486,17.514,2,12,2z M12,20 c-4.411,0-8-3.589-8-8s3.589-8,8-8s8,3.589,8,8S16.411,20,12,20z M11,11h2v6h-2V11z M11,7h2v2h-2V7z"/></svg>',
+    warning: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,2C6.486,2,2,6.486,2,12s4.486,10,10,10s10-4.486,10-10S17.514,2,12,2z M12,20c-4.411,0-8-3.589-8-8s3.589-8,8-8 s8,3.589,8,8S16.411,20,12,20z M13,13h-2V7h2V13z M13,17h-2v-2h2V17z"/></svg>'
+  };
   
-  // 添加到页面顶部
-  document.body.insertBefore(messageDiv, document.body.firstChild);
+  // 创建新的消息元素
+  const messageElement = document.createElement('div');
+  messageElement.className = `popup-message ${type} notification`;
+  messageElement.innerHTML = `
+    <span class="message-icon">
+      ${icons[type] || icons.info}
+    </span>
+    <span class="message-text">${message}</span>
+  `;
   
-  // 如果是成功消息，设置自动消失
-  if (type === 'success') {
-    setTimeout(() => {
-      if (messageDiv.parentNode) {
-        messageDiv.remove();
-      }
-    }, 3000);
-  }
+  // 添加到页面
+  document.body.appendChild(messageElement);
+  
+  // 添加动画结束监听器，自动移除消息元素
+  messageElement.addEventListener('animationend', () => {
+    messageElement.remove();
+  });
 }
 
 /**

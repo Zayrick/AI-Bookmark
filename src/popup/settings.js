@@ -94,7 +94,10 @@ async function init() {
   
   // 添加返回按钮事件
   backButton.addEventListener('click', () => {
-    window.location.href = 'popup.html'
+    document.body.classList.add('page-transition');
+    setTimeout(() => {
+      window.location.href = 'popup.html';
+    }, 400);
   })
 }
 
@@ -106,7 +109,18 @@ async function handleSaveSettings() {
     // 显示按钮加载状态
     const saveSettingsButton = document.getElementById('saveSettingsButton');
     const originalText = saveSettingsButton.textContent;
-    saveSettingsButton.innerHTML = `<span class="loading-spinner"></span> 保存中...`;
+    
+    // 使用AI处理动画
+    saveSettingsButton.innerHTML = `
+      <div class="ai-processing">
+        <div class="ai-processing-dots">
+          <div class="ai-dot"></div>
+          <div class="ai-dot"></div>
+          <div class="ai-dot"></div>
+        </div>
+      </div>
+      <span>保存中</span>
+    `;
     saveSettingsButton.disabled = true;
     
     // 获取所有设置值
@@ -152,10 +166,13 @@ async function handleSaveSettings() {
     saveSettingsButton.innerHTML = originalText;
     saveSettingsButton.disabled = false;
     
-    // 延迟后返回主页
+    // 延迟后返回主页，添加平滑过渡动画
     setTimeout(() => {
-      window.location.href = 'popup.html';
-    }, 1500);
+      document.body.classList.add('page-transition');
+      setTimeout(() => {
+        window.location.href = 'popup.html';
+      }, 400);
+    }, 1000);
     
   } catch (err) {
     console.error('保存设置失败:', err);
@@ -190,11 +207,22 @@ async function searchModels(apiUrl, apiKey, searchTerm = '') {
     return;
   }
   
-  // 显示模型列表
+  // 显示模型列表（带动画）
   modelList.style.display = 'block';
+  modelList.classList.remove('hide');
+  modelList.classList.add('visible');
   
   // 显示加载中
-  modelList.innerHTML = '<div class="model-loading">正在加载模型列表...</div>';
+  modelList.innerHTML = `
+    <div class="model-loading">
+      <div class="ai-processing-dots">
+        <div class="ai-dot"></div>
+        <div class="ai-dot"></div>
+        <div class="ai-dot"></div>
+      </div>
+      <span>正在加载模型列表...</span>
+    </div>
+  `;
   
   try {
     // 获取模型列表
@@ -202,7 +230,11 @@ async function searchModels(apiUrl, apiKey, searchTerm = '') {
     
     // 如果没有返回模型或返回空数组
     if (!models || models.length === 0) {
-      modelList.innerHTML = '<div class="model-loading">未找到可用模型，请确认API地址格式正确</div>';
+      modelList.innerHTML = `
+        <div class="model-loading">
+          <span>未找到可用模型，请确认API地址格式正确</span>
+        </div>
+      `;
       return;
     }
     
@@ -218,7 +250,11 @@ async function searchModels(apiUrl, apiKey, searchTerm = '') {
     
     // 如果过滤后没有模型
     if (filteredModels.length === 0) {
-      modelList.innerHTML = `<div class="model-loading">未找到匹配 "${searchTerm}" 的模型</div>`;
+      modelList.innerHTML = `
+        <div class="model-loading">
+          <span>未找到匹配 "${searchTerm}" 的模型</span>
+        </div>
+      `;
       return;
     }
     
@@ -245,8 +281,14 @@ async function searchModels(apiUrl, apiKey, searchTerm = '') {
         modelInput.value = modelId;
         // 触发change事件保存选择
         modelInput.dispatchEvent(new Event('change'));
-        // 隐藏模型列表
-        modelList.style.display = 'none';
+        // 隐藏模型列表（带动画）
+        modelList.classList.remove('visible');
+        modelList.classList.add('hide');
+        // 监听动画结束后移除显示
+        modelList.addEventListener('animationend', function hideList() {
+          modelList.style.display = 'none';
+          modelList.removeEventListener('animationend', hideList);
+        }, {once: true});
         // 清空搜索框
         document.getElementById('modelSearch').value = '';
       });
@@ -254,7 +296,16 @@ async function searchModels(apiUrl, apiKey, searchTerm = '') {
     
   } catch (err) {
     console.error('获取模型列表失败:', err);
-    modelList.innerHTML = `<div class="model-loading">获取模型列表失败: ${err.message || err.valueOf()}</div>`;
+    modelList.innerHTML = `
+      <div class="model-loading">
+        <div class="ai-processing-dots">
+          <div class="ai-dot"></div>
+          <div class="ai-dot"></div>
+          <div class="ai-dot"></div>
+        </div>
+        <span>获取模型列表失败: ${err.message || err.valueOf()}</span>
+      </div>
+    `;
   }
 }
 
@@ -276,56 +327,43 @@ async function updateConfig(key, value) {
 } 
 
 /**
- * 显示popup内的消息提示
+ * 在页面上显示消息提示
  * 
- * @param {string} message - 消息内容
- * @param {string} type - 消息类型 (info, success, warning, error)
+ * @param {string} message - 要显示的消息
+ * @param {string} type - 消息类型 (info, success, error)
  */
 function showPopupMessage(message, type = 'info') {
-  // 移除现有消息
-  const existingMsg = document.getElementById('messageDiv')
-  if (existingMsg) existingMsg.remove()
-  
-  // 创建消息元素
-  const messageDiv = document.createElement('div')
-  messageDiv.id = 'messageDiv'
-  messageDiv.style.padding = '10px'
-  messageDiv.style.margin = '10px 0'
-  messageDiv.style.borderRadius = '4px'
-  messageDiv.style.textAlign = 'center'
-  
-  // 设置样式根据消息类型
-  switch (type) {
-    case 'success':
-      messageDiv.style.backgroundColor = '#d4edda'
-      messageDiv.style.color = '#155724'
-      break
-    case 'warning':
-      messageDiv.style.backgroundColor = '#fff3cd'
-      messageDiv.style.color = '#856404'
-      break
-    case 'error':
-      messageDiv.style.backgroundColor = '#f8d7da'
-      messageDiv.style.color = '#721c24'
-      break
-    default: // info
-      messageDiv.style.backgroundColor = '#d1ecf1'
-      messageDiv.style.color = '#0c5460'
+  // 删除现有的消息元素
+  const existingMessage = document.querySelector('.popup-message');
+  if (existingMessage) {
+    existingMessage.remove();
   }
   
-  messageDiv.textContent = message
+  // 图标定义
+  const icons = {
+    success: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,2C6.486,2,2,6.486,2,12s4.486,10,10,10s10-4.486,10-10S17.514,2,12,2z M12,20c-4.411,0-8-3.589-8-8s3.589-8,8-8 s8,3.589,8,8S16.411,20,12,20z M9.999,13.587L7.7,11.292l-1.412,1.416l3.713,3.705l6.706-6.706l-1.414-1.414L9.999,13.587z"/></svg>',
+    error: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M11.953,2C6.465,2,2,6.486,2,12s4.486,10,10,10s10-4.486,10-10S17.493,2,11.953,2z M12,20c-4.411,0-8-3.589-8-8 s3.567-8,8-8c4.412,0,8,3.589,8,8S16.413,20,12,20z M13,7h-2v6h2V7z M13,15h-2v2h2V15z"/></svg>',
+    info: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,2C6.486,2,2,6.486,2,12c0,5.514,4.486,10,10,10c5.514,0,10-4.486,10-10C22,6.486,17.514,2,12,2z M12,20 c-4.411,0-8-3.589-8-8s3.589-8,8-8s8,3.589,8,8S16.411,20,12,20z M11,11h2v6h-2V11z M11,7h2v2h-2V7z"/></svg>',
+    warning: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,2C6.486,2,2,6.486,2,12s4.486,10,10,10s10-4.486,10-10S17.514,2,12,2z M12,20c-4.411,0-8-3.589-8-8s3.589-8,8-8 s8,3.589,8,8S16.411,20,12,20z M13,13h-2V7h2V13z M13,17h-2v-2h2V17z"/></svg>'
+  };
   
-  // 添加到页面顶部
-  document.body.insertBefore(messageDiv, document.body.firstChild)
+  // 创建新的消息元素
+  const messageElement = document.createElement('div');
+  messageElement.className = `popup-message ${type} notification`;
+  messageElement.innerHTML = `
+    <span class="message-icon">
+      ${icons[type] || icons.info}
+    </span>
+    <span class="message-text">${message}</span>
+  `;
   
-  // 如果是成功消息，设置自动消失
-  if (type === 'success') {
-    setTimeout(() => {
-      if (messageDiv.parentNode) {
-        messageDiv.remove()
-      }
-    }, 3000)
-  }
+  // 添加到页面
+  document.body.appendChild(messageElement);
+  
+  // 添加动画结束监听器，自动移除消息元素
+  messageElement.addEventListener('animationend', () => {
+    messageElement.remove();
+  });
 }
 
 /**
