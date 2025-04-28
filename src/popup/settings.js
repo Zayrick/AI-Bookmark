@@ -29,6 +29,9 @@ async function init() {
   const saveSettingsButton = document.getElementById('saveSettingsButton')  // 保存设置按钮
   const backButton = document.getElementById('backButton')  // 返回按钮
   
+  // 为当前页面添加页面加载动画
+  document.body.classList.add('page-loading');
+  
   // 从本地存储获取配置
   const config = await getConfig()
   
@@ -93,12 +96,25 @@ async function init() {
   saveSettingsButton.addEventListener('click', handleSaveSettings)
   
   // 添加返回按钮事件
-  backButton.addEventListener('click', () => {
-    document.body.classList.add('page-transition');
-    setTimeout(() => {
-      window.location.href = 'popup.html';
-    }, 400);
+  backButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('popup.html');
   })
+}
+
+/**
+ * 页面导航函数，处理页面切换动画
+ * 
+ * @param {string} url - 目标页面URL
+ */
+function navigateTo(url) {
+  // 添加过渡动画
+  document.body.classList.add('page-transition');
+  
+  // 短暂延迟后跳转，让过渡动画有时间执行
+  setTimeout(() => {
+    window.location.href = url;
+  }, 120);
 }
 
 /**
@@ -168,10 +184,7 @@ async function handleSaveSettings() {
     
     // 延迟后返回主页，添加平滑过渡动画
     setTimeout(() => {
-      document.body.classList.add('page-transition');
-      setTimeout(() => {
-        window.location.href = 'popup.html';
-      }, 400);
+      navigateTo('popup.html');
     }, 1000);
     
   } catch (err) {

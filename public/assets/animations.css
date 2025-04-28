@@ -6,8 +6,24 @@
   to { opacity: 1; }
 }
 
+/* 初始状态 - 所有页面默认不可见直到添加动画类 */
 body {
-  animation: fadeIn 0.3s ease-out;
+  opacity: 0;
+}
+
+/* 页面加载动画 */
+body.page-loading {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* 页面加载后的默认状态 */
+body:not(.page-loading):not(.page-transition):not(.page-entering) {
+  opacity: 1;
+}
+
+/* 页面进入动画 - 从其他页面跳转进入时 */
+body.page-entering {
+  animation: pageLoading 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 /* 按钮点击效果 */
@@ -147,7 +163,7 @@ input:checked + .toggle-slider:before {
   animation: notification 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* 页面跳转动画 */
+/* 页面跳转动画 - 优化版 */
 @keyframes pageTransition {
   0% {
     opacity: 1;
@@ -155,12 +171,25 @@ input:checked + .toggle-slider:before {
   }
   100% {
     opacity: 0;
-    transform: translateY(-15px);
+    transform: translateY(-10px);
+  }
+}
+
+/* 添加新的加载动画 */
+@keyframes pageLoading {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 .page-transition {
-  animation: pageTransition 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: pageTransition 0.18s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+  pointer-events: none; /* 防止过渡期间的用户交互 */
 }
 
 /* 收藏成功动画 */

@@ -28,6 +28,9 @@ async function init() {
   const enableTitleGen = document.getElementById('enableTitleGen')
   const enableSmartPath = document.getElementById('enableSmartPath')
   
+  // 为当前页面添加页面加载动画
+  document.body.classList.add('page-loading');
+  
   // 从本地存储获取配置
   const config = await getConfig()
   
@@ -56,19 +59,15 @@ async function init() {
   }
   
   // 添加各种按钮点击事件
-  settingsButton.addEventListener('click', () => {
-    document.body.classList.add('page-transition');
-    setTimeout(() => {
-      window.location.href = 'settings.html';
-    }, 400);
+  settingsButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('settings.html');
   })
   
   // 添加设置向导按钮点击事件
-  setupButton.addEventListener('click', () => {
-    document.body.classList.add('page-transition');
-    setTimeout(() => {
-      window.location.href = 'settings.html';
-    }, 400);
+  setupButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('settings.html');
   })
   
   // 跳转整理页按钮
@@ -79,6 +78,21 @@ async function init() {
   
   // 为收藏按钮添加点击事件
   bookmarkButton.addEventListener('click', handleBookmark)
+}
+
+/**
+ * 页面导航函数，处理页面切换动画
+ * 
+ * @param {string} url - 目标页面URL
+ */
+function navigateTo(url) {
+  // 添加过渡动画
+  document.body.classList.add('page-transition');
+  
+  // 短暂延迟后跳转，让过渡动画有时间执行
+  setTimeout(() => {
+    window.location.href = url;
+  }, 120);
 }
 
 /**
