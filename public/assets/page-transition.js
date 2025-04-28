@@ -2,11 +2,11 @@
  * page-transition.js - 处理页面加载和过渡动画
  */
 
-// 在DOM加载前就添加页面加载动画类
-document.body.classList.add('page-loading');
-
-// 确保页面动画平滑
+// 将页面加载动画类的添加移到DOMContentLoaded事件中，确保body元素已存在
 document.addEventListener('DOMContentLoaded', () => {
+  // 先添加页面加载动画类
+  document.body.classList.add('page-loading');
+  
   // 延迟后移除加载动画类
   setTimeout(() => {
     document.body.classList.remove('page-loading');

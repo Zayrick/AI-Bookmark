@@ -16,7 +16,7 @@ export function createNotification(message) {
     position: fixed;
     top: 20px;
     right: 20px;
-    background: #4285f4;
+    background: #2b6cd4;
     color: white;
     padding: 15px 20px;
     border-radius: 8px;

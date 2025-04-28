@@ -24,6 +24,7 @@ async function init() {
   const modelList = document.getElementById('modelList')    // 模型列表容器
   const systemNotification = document.getElementById('systemNotification')  // 系统通知单选框
   const browserNotification = document.getElementById('browserNotification')  // 浏览器通知单选框
+  const browserNotificationHint = document.getElementById('browserNotificationHint') // 浏览器通知提示
   const enableTitleGen = document.getElementById('enableTitleGen')  // 启用标题生成开关
   const enableSmartPath = document.getElementById('enableSmartPath')  // 启用智能路径推荐开关
   const saveSettingsButton = document.getElementById('saveSettingsButton')  // 保存设置按钮
@@ -44,8 +45,14 @@ async function init() {
   const notificationType = config.notificationType || NOTIFICATION_TYPES.SYSTEM
   if (notificationType === NOTIFICATION_TYPES.SYSTEM) {
     systemNotification.checked = true
+    // 确保提示隐藏
+    browserNotificationHint.style.display = 'none'
+    browserNotificationHint.style.height = '0'
+    browserNotificationHint.style.opacity = '0'
   } else if (notificationType === NOTIFICATION_TYPES.BROWSER) {
     browserNotification.checked = true
+    // 显示提示
+    showBrowserNotificationHint()
   }
 
   // 设置标题生成开关状态
@@ -73,12 +80,16 @@ async function init() {
   systemNotification.addEventListener('change', () => {
     if (systemNotification.checked) {
       updateConfig('notificationType', NOTIFICATION_TYPES.SYSTEM)
+      // 隐藏提示
+      hideBrowserNotificationHint()
     }
   })
   
   browserNotification.addEventListener('change', () => {
     if (browserNotification.checked) {
       updateConfig('notificationType', NOTIFICATION_TYPES.BROWSER)
+      // 显示提示
+      showBrowserNotificationHint()
     }
   })
 
@@ -100,6 +111,27 @@ async function init() {
     e.preventDefault();
     navigateTo('popup.html');
   })
+  
+  // 添加密码显示/隐藏切换功能
+  const togglePassword = document.getElementById('togglePassword');
+  if (togglePassword) {
+    togglePassword.addEventListener('click', () => {
+      const apiKey = document.getElementById('apiKey');
+      const eyeOpen = document.getElementById('eyeOpen');
+      const eyeClosed = document.getElementById('eyeClosed');
+      
+      // 切换密码可见性
+      if (apiKey.type === 'password') {
+        apiKey.type = 'text';
+        eyeOpen.style.display = 'none';
+        eyeClosed.style.display = 'block';
+      } else {
+        apiKey.type = 'password';
+        eyeOpen.style.display = 'block';
+        eyeClosed.style.display = 'none';
+      }
+    });
+  }
 }
 
 /**
@@ -395,4 +427,41 @@ function escapeHTML(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;')
+}
+
+/**
+ * 显示浏览器通知提示，并添加简单淡入效果
+ */
+function showBrowserNotificationHint() {
+  const hint = document.getElementById('browserNotificationHint')
+  if (!hint) return
+  
+  // 首先显示元素
+  hint.style.display = 'block'
+  
+  // 获取文本内容的实际高度
+  const height = hint.scrollHeight
+  
+  // 动画展开
+  setTimeout(() => {
+    hint.style.height = height + 'px'
+    hint.style.opacity = '1'
+  }, 10)
+}
+
+/**
+ * 隐藏浏览器通知提示
+ */
+function hideBrowserNotificationHint() {
+  const hint = document.getElementById('browserNotificationHint')
+  if (!hint) return
+  
+  // 动画收起
+  hint.style.height = '0'
+  hint.style.opacity = '0'
+  
+  // 完成后隐藏
+  setTimeout(() => {
+    hint.style.display = 'none'
+  }, 300)
 }

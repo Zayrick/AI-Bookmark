@@ -229,4 +229,18 @@ input:checked + .toggle-slider:before {
   height: 3px;
   background-color: rgba(255, 255, 255, 0.7);
   animation: progressBar 1.5s linear forwards;
+}
+
+/* 密码显示/隐藏按钮动画 */
+.password-toggle, .password-toggle-inline {
+  transition: background-color 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.password-toggle-inline:active {
+  background-color: rgba(66,133,244,0.3);
+}
+
+.password-toggle svg path,
+.password-toggle-inline svg path {
+  transition: opacity 0.3s ease;
 } 
