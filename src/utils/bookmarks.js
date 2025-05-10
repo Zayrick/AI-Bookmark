@@ -69,20 +69,44 @@ export async function createBookmark(parentId, title, url) {
  * @returns {Promise<string>} 最终（最深层）文件夹的 ID
  */
 export async function ensureFolderPath(path, baseFolderId = null) {
-  if (!path) throw new Error('无效的文件夹路径')
-
-  // 获取书签栏根节点 ID（或用户指定的根）
-  if (!baseFolderId) {
-    const tree = await chrome.bookmarks.getTree()
-    // 通常 bookmark bar 的节点 id 为 '1'，也可以根据 title 判断
-    const barNode = tree[0].children.find(n => n.id === '1' || /bookmarks?/i.test(n.title) || n.title === '书签栏')
-    baseFolderId = barNode ? barNode.id : tree[0].children[0].id
+  if (!path) {
+    throw new Error('无效的文件夹路径')
   }
 
-  let parentId = baseFolderId
+  /*
+   * 1. 确定根节点 (bookmark bar 或调用方指定的节点) 及其标题;
+   * 2. 若 AI 返回的路径以该标题开头，则跳过这一段，避免出现 "根/根/子目录" 的情况;
+   * 3. 逐级查询/创建其余目录。
+   */
+
+  // ---------- 第 1 步：确定根节点 ----------
+  let rootFolderId = baseFolderId
+  let rootFolderTitle = ''
+
+  if (rootFolderId) {
+    const rootNodes = await chrome.bookmarks.get(rootFolderId)
+    rootFolderTitle = rootNodes?.[0]?.title || ''
+  } else {
+    const tree = await chrome.bookmarks.getTree()
+    // 取第一个"无 URL"的节点作为根目录（不同浏览器实现可能不同，但第一个通常是主书签目录）
+    const firstFolder = tree[0].children.find(n => !n.url) || tree[0].children[0]
+    rootFolderId = firstFolder.id
+    rootFolderTitle = firstFolder.title
+  }
+
+  let parentId = rootFolderId
 
   // 清理首尾斜杠并按 / 分割
   const segments = path.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean)
+
+  // 若路径首段与根目录标题一致，则移除，避免重复创建
+  if (
+    segments.length &&
+    rootFolderTitle &&
+    segments[0].toLowerCase() === rootFolderTitle.toLowerCase()
+  ) {
+    segments.shift()
+  }
 
   for (const segment of segments) {
     // 获取父节点下的所有子节点

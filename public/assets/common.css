@@ -238,46 +238,70 @@ input:checked + .toggle-slider:before {
   transform: translateX(20px);
 }
 
-/* 通知样式 */
+:root {
+  /* 通用弹窗通知设计基线 */
+  --pm-width: 85%;
+  --pm-max-width: 300px;
+  --pm-radius: 16px;
+  --pm-padding: 14px 18px;
+  --pm-shadow: 0 10px 25px rgba(0,0,0,0.12), 0 2px 5px rgba(0,0,0,0.08);
+  --pm-blur: 10px;
+  /* 通知颜色变量 */
+  --pm-success-bg: rgba(236, 253, 245, 0.85);
+  --pm-success-color: #065f46;
+  --pm-success-border: #10b981;
+  --pm-error-bg: rgba(254, 242, 242, 0.85);
+  --pm-error-color: #991b1b;
+  --pm-error-border: #ef4444;
+  --pm-info-bg: rgba(239, 246, 255, 0.85);
+  --pm-info-color: #1e40af;
+  --pm-info-border: #3b82f6;
+  --pm-warning-bg: rgba(255, 251, 235, 0.85);
+  --pm-warning-color: #92400e;
+  --pm-warning-border: #f59e0b;
+}
+
+/* ---------- 弹窗消息 ---------- */
+/* 基础外观：位置、大小、圆角、阴影、毛玻璃 整体一致 */
 .popup-message {
   position: fixed;
-  top: 16px;
+  top: 64px;                         /* 与 header 留出同等间距 */
   left: 50%;
   transform: translateX(-50%);
-  min-width: 260px;
-  max-width: 90%;
-  padding: 14px 18px;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.12), 0 2px 5px rgba(0,0,0,0.08);
+  width: var(--pm-width);
+  max-width: var(--pm-max-width);
+  padding: var(--pm-padding);
+  border-radius: var(--pm-radius);
+  box-shadow: var(--pm-shadow);
   display: flex;
-  align-items: center;
+  align-items: flex-start;            /* 多行文本时图标顶部对齐 */
   z-index: 1000;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(var(--pm-blur));
+  -webkit-backdrop-filter: blur(var(--pm-blur));
   border: 1px solid rgba(255,255,255,0.2);
 }
 
 .popup-message.success {
-  background-color: rgba(236, 253, 245, 0.85);
-  color: #065f46;
+  background-color: var(--pm-success-bg);
+  color: var(--pm-success-color);
   border-left: none;
 }
 
 .popup-message.error {
-  background-color: rgba(254, 242, 242, 0.85);
-  color: #991b1b;
+  background-color: var(--pm-error-bg);
+  color: var(--pm-error-color);
   border-left: none;
 }
 
 .popup-message.info {
-  background-color: rgba(239, 246, 255, 0.85);
-  color: #1e40af;
+  background-color: var(--pm-info-bg);
+  color: var(--pm-info-color);
   border-left: none;
 }
 
 .popup-message.warning {
-  background-color: rgba(255, 251, 235, 0.85);
-  color: #92400e;
+  background-color: var(--pm-warning-bg);
+  color: var(--pm-warning-color);
   border-left: none;
 }
 
@@ -288,27 +312,29 @@ input:checked + .toggle-slider:before {
   top: 0;
   width: 4px;
   height: 100%;
-  border-top-left-radius: 16px;
-  border-bottom-left-radius: 16px;
+  border-top-left-radius: var(--pm-radius);
+  border-bottom-left-radius: var(--pm-radius);
 }
 
 .popup-message.success::before {
-  background-color: #10b981;
+  background-color: var(--pm-success-border);
 }
 
 .popup-message.error::before {
-  background-color: #ef4444;
+  background-color: var(--pm-error-border);
 }
 
 .popup-message.info::before {
-  background-color: #3b82f6;
+  background-color: var(--pm-info-border);
 }
 
 .popup-message.warning::before {
-  background-color: #f59e0b;
+  background-color: var(--pm-warning-border);
 }
 
+/* 默认图标样式 */
 .message-icon {
+  flex-shrink: 0;
   margin-right: 12px;
   display: flex;
   align-items: center;
@@ -321,35 +347,96 @@ input:checked + .toggle-slider:before {
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
+/* 仅在普通通知中，将图标顶部对齐，以优化多行文本的视觉效果 */
+.popup-message:not(.bookmark-success) .message-icon {
+  align-self: flex-start;
+}
+
 .message-text {
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
 }
 
-/* 收藏成功消息特殊样式 - 靠上居中 */
-.popup-message.bookmark-success {
+/* --------- 统一的通知样式 ---------- */
+.popup-message.timed-notification {
   background: linear-gradient(135deg, rgba(209, 250, 229, 0.92) 0%, rgba(204, 251, 241, 0.92) 100%);
-  border-left: none;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 
-    0 10px 25px rgba(6, 95, 70, 0.15),
-    0 2px 10px rgba(6, 95, 70, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.4) inset;
-  padding: 16px 20px;
+  color: var(--pm-success-color);
+  border-left: none;                  /* 不需要左侧色条 */
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  border-radius: 18px;
-  color: #065f46;
-  width: 85%;
-  max-width: 300px;
-  
-  /* 靠上居中定位 */
-  top: 70px;
-  transform: translateX(-50%);
+}
+
+/* 根据不同类型使用不同的渐变背景 */
+.popup-message.timed-notification.success {
+  background: linear-gradient(135deg, rgba(209, 250, 229, 0.92) 0%, rgba(204, 251, 241, 0.92) 100%);
+  color: var(--pm-success-color);
+}
+
+.popup-message.timed-notification.error {
+  background: linear-gradient(135deg, rgba(254, 226, 226, 0.92) 0%, rgba(254, 242, 242, 0.92) 100%);
+  color: var(--pm-error-color);
+}
+
+.popup-message.timed-notification.info {
+  background: linear-gradient(135deg, rgba(219, 234, 254, 0.92) 0%, rgba(239, 246, 255, 0.92) 100%);
+  color: var(--pm-info-color);
+}
+
+.popup-message.timed-notification.warning {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.92) 0%, rgba(255, 251, 235, 0.92) 100%);
+  color: var(--pm-warning-color);
+}
+
+.popup-message.timed-notification::before {
+  display: none;
+}
+
+.popup-message.timed-notification .message-icon {
+  margin-right: 8px;
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6) inset, 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 为所有计时通知添加进度条 */
+.popup-message.timed-notification .progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  border-bottom-left-radius: var(--pm-radius);
+  border-bottom-right-radius: var(--pm-radius);
+  animation: progressBar 1.5s linear forwards;
+}
+
+/* 根据不同类型使用不同的进度条颜色 */
+.popup-message.timed-notification.success .progress-bar {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0.8) 100%);
+}
+
+.popup-message.timed-notification.error .progress-bar {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.4) 0%, rgba(239, 68, 68, 0.8) 100%);
+}
+
+.popup-message.timed-notification.info .progress-bar {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.4) 0%, rgba(59, 130, 246, 0.8) 100%);
+}
+
+.popup-message.timed-notification.warning .progress-bar {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.4) 0%, rgba(245, 158, 11, 0.8) 100%);
+}
+
+/* 兼容旧的书签成功通知，新代码会使用timed-notification */
+.popup-message.bookmark-success {
+  background: linear-gradient(135deg, rgba(209, 250, 229, 0.92) 0%, rgba(204, 251, 241, 0.92) 100%);
+  color: var(--pm-success-color);
+  border-left: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .popup-message.bookmark-success::before {
@@ -369,7 +456,8 @@ input:checked + .toggle-slider:before {
   bottom: 0;
   left: 0;
   height: 3px;
-  border-bottom-left-radius: 18px;
+  border-bottom-left-radius: var(--pm-radius);
+  border-bottom-right-radius: var(--pm-radius);
   background: linear-gradient(90deg, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0.8) 100%);
   animation: progressBar 1.5s linear forwards;
 }

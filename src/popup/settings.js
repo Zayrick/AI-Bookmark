@@ -392,15 +392,34 @@ function showPopupMessage(message, type = 'info') {
     warning: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,2C6.486,2,2,6.486,2,12s4.486,10,10,10s10-4.486,10-10S17.514,2,12,2z M12,20c-4.411,0-8-3.589-8-8s3.589-8,8-8 s8,3.589,8,8S16.411,20,12,20z M13,13h-2V7h2V13z M13,17h-2v-2h2V17z"/></svg>'
   };
   
+  // 如果是设置保存成功，使用定时通知样式（带进度条，居中）
+  const useFancyNotification = type === 'success' && message === '设置已保存';
+  
   // 创建新的消息元素
   const messageElement = document.createElement('div');
-  messageElement.className = `popup-message ${type} notification`;
-  messageElement.innerHTML = `
-    <span class="message-icon">
-      ${icons[type] || icons.info}
-    </span>
-    <span class="message-text">${message}</span>
-  `;
+  
+  if (useFancyNotification) {
+    // 使用居中、带进度条的样式
+    messageElement.className = `popup-message timed-notification ${type} notification`;
+    messageElement.innerHTML = `
+      <div style="margin-bottom: 8px; display: flex; justify-content: center; align-items: center;">
+        <span class="message-icon">
+          ${icons[type] || icons.info}
+        </span>
+        <span class="message-text" style="font-weight: 600;">${message}</span>
+      </div>
+      <div class="progress-bar"></div>
+    `;
+  } else {
+    // 使用常规样式（左侧边栏样式）
+    messageElement.className = `popup-message ${type} notification`;
+    messageElement.innerHTML = `
+      <span class="message-icon">
+        ${icons[type] || icons.info}
+      </span>
+      <span class="message-text">${message}</span>
+    `;
+  }
   
   // 添加到页面
   document.body.appendChild(messageElement);
