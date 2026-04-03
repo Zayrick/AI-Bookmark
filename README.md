@@ -1,4 +1,4 @@
-# AI-Bookmark (AI书签助手)
+# AI-Bookmark
 
 基于 AI API 实现的智能自动分类书签 Chrome 浏览器扩展，能够自动将网站收藏到最适合的书签文件夹。
 
